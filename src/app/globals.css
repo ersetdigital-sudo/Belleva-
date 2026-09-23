@@ -1,0 +1,127 @@
+@import "tailwindcss";
+
+/* ---------------------------------------------------------------------------
+   Brand tokens — ported 1:1 from the original :root block so the visual
+   identity (blue #1668f5, deep ink navy, soft lavender-white) is preserved.
+   Declaring them in @theme makes them available both as CSS variables and as
+   Tailwind utilities (bg-brand, text-muted, border-line, shadow-soft, ...).
+--------------------------------------------------------------------------- */
+@theme {
+  --color-brand: #1668f5;
+  --color-brand-dark: #0f3f9e;
+
+  --color-ink: #0d1b39;
+  --color-muted: #5b6b8c;
+  --color-soft: #f4f7fe;
+  --color-line: #e7edfa;
+  --color-line-2: #dfe7f7;
+
+  --color-danger: #e5484d;
+  --color-danger-soft: #fdeaea;
+  --color-success: #17a45f;
+  --color-success-soft: #e6f7ee;
+  --color-warn: #f5a524;
+  --color-violet: #6b4df6;
+  --color-pink: #e5489d;
+  --color-cyan: #12a5e0;
+
+  --radius-card: 18px;
+  --radius-hero: 26px;
+  --radius-pill: 999px;
+
+  --shadow-soft: 0 18px 44px -24px rgba(22, 104, 245, 0.35);
+  --shadow-hover: 0 18px 40px -26px rgba(22, 104, 245, 0.45);
+
+  --font-sans: var(--font-plus-jakarta), system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    /* Offset anchor targets so the sticky header does not cover section titles. */
+    scroll-padding-top: 5rem;
+  }
+
+  body {
+    background: #fff;
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+  }
+}
+
+@layer components {
+  /* Signature components lifted from the original inline <style> block. */
+  .h-display {
+    letter-spacing: -0.03em;
+    line-height: 1.05;
+  }
+
+  .blue-grad {
+    background: linear-gradient(135deg, #1668f5 0%, #0f3f9e 100%);
+  }
+
+  .hero-bg {
+    background:
+      radial-gradient(900px 520px at 78% 18%, #dce8ff 0%, rgba(220, 232, 255, 0) 70%),
+      linear-gradient(180deg, #ffffff 0%, #f4f7fe 100%);
+  }
+
+  .card {
+    background: #fff;
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-card);
+  }
+
+  .ico {
+    width: 52px;
+    height: 52px;
+    border-radius: 16px;
+    display: grid;
+    place-items: center;
+    box-shadow: inset 0 0 0 1px rgba(13, 27, 57, 0.05);
+  }
+
+  .ico > svg {
+    width: 26px;
+    height: 26px;
+  }
+
+  .feat {
+    transition:
+      transform 0.2s ease,
+      box-shadow 0.2s ease;
+  }
+
+  .feat:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-hover);
+  }
+
+  /*
+   * Cap the checkout sheet to one screen so its body scrolls instead of the
+   * whole sheet growing past the viewport. The `vh` line is a fallback for
+   * browsers without dynamic viewport units (mobile address bar).
+   */
+  .sheet {
+    max-height: calc(100vh - 1rem);
+    max-height: calc(100dvh - 1rem);
+  }
+}
+
+@utility no-scrollbar {
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  .feat {
+    transition: none;
+  }
+}
