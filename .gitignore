@@ -41,6 +41,9 @@ yarn-error.log*
 /AGENTS.md
 /CLAUDE.md
 
+# reference art kept locally, not part of the app
+/Logo Operator/
+
 # vercel
 .vercel
 
