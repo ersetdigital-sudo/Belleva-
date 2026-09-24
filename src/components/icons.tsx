@@ -1,6 +1,7 @@
 import type {
   CategoryIconId,
   FeatureIconId,
+  HelpIconId,
   PaymentIconId,
   SocialIconId,
 } from "@/types";
@@ -535,4 +536,50 @@ export function ReceiptIcon({ size = 22, className }: { size?: number; className
       <path d="M9 8.6h6M9 12.2h3.6" />
     </svg>
   );
+}
+
+export function ChevronDownIcon({ size = 16, className }: { size?: number; className?: string }) {
+  return (
+    <svg {...APP_ICON} width={size} height={size} className={className}>
+      <path d="m5.5 9.5 6.5 6.5 6.5-6.5" />
+    </svg>
+  );
+}
+
+/* --------------------- Support and legal link icons ---------------------- */
+
+export function ChatIcon({ size = 18, className }: { size?: number; className?: string }) {
+  return (
+    <svg {...APP_ICON} width={size} height={size} className={className}>
+      <path d="M20 11.5c0 3.5-3.6 6.3-8 6.3a9.9 9.9 0 0 1-2.7-.37L4.5 19.5l.9-3.1A6.1 6.1 0 0 1 4 11.5C4 8 7.6 5.2 12 5.2s8 2.8 8 6.3Z" />
+    </svg>
+  );
+}
+
+export function DocIcon({ size = 18, className }: { size?: number; className?: string }) {
+  return (
+    <svg {...APP_ICON} width={size} height={size} className={className}>
+      <path d="M6.5 3.5h7.6l5.4 5.1v11.9h-13V3.5Z" />
+      <path d="M13.8 3.7v5.2h5.4" />
+      <path d="M9.2 13.1h5.6M9.2 16.4h3.8" />
+    </svg>
+  );
+}
+
+export function PrivacyShieldIcon({ size = 18, className }: { size?: number; className?: string }) {
+  return (
+    <svg {...APP_ICON} width={size} height={size} className={className}>
+      <path d="M12 3.2 19 6v5.7c0 4.3-3 8-7 8.9-4-.9-7-4.6-7-8.9V6l7-2.8Z" />
+      <circle cx="12" cy="10.2" r="1.4" fill="currentColor" stroke="none" />
+      <path d="M12 11.7v3" />
+    </svg>
+  );
+}
+
+/** Picks the icon a support/legal link shows, the same way CategoryIcon does. */
+export function HelpLinkIcon({ id, className }: { id: HelpIconId; className?: string }) {
+  if (id === "chat") return <ChatIcon className={className} />;
+  if (id === "doc") return <DocIcon className={className} />;
+  if (id === "shield") return <PrivacyShieldIcon className={className} />;
+  return <HelpIcon size={18} className={className} />;
 }

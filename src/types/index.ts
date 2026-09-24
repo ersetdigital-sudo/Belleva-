@@ -41,6 +41,15 @@ export interface NavLink {
   href: string;
 }
 
+/** Icon shown beside a support/legal link. */
+export type HelpIconId = "help" | "chat" | "doc" | "shield";
+
+export interface HelpLink {
+  label: string;
+  href: string;
+  icon: HelpIconId;
+}
+
 export interface Category {
   id: CategoryIconId;
   label: string;

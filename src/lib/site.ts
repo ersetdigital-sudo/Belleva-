@@ -24,9 +24,6 @@ export const siteConfig = {
  * Fill these in once the real URLs / numbers exist — nothing else needs editing.
  */
 export const externalLinks = {
-  login: "#",
-  /** Header CTA — scrolls down to the sign-up section. */
-  register: "/#daftar",
   /** TODO(content): real registration destination for the CTA button. */
   signUp: "#",
   allProducts: "#",

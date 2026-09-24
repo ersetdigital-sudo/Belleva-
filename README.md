@@ -65,6 +65,15 @@ Catatan desain: URL `/bayar` cuma bawa **id produk + nomor**, harga selalu di-re
 
 Shortcut ikon di hero ("Pulsa", "Paket Data") langsung ganti tab yang aktif.
 
+## Header
+
+Header desktop (dari `lg`): logo di kiri, menu navigasi **rata tengah**, tombol **Bantuan** di kanan.
+
+- Menu-nya di-pin ke tengah (`absolute left-1/2 -translate-x-1/2` + `inset-y-0`), bukan mengalir setelah logo — jadi posisinya tidak bergeser kalau lebar logo atau tombol kanan berubah.
+- **Tombol Masuk/Daftar dihapus**, diganti tombol Bantuan. Keempat link bantuan/legal tidak muat kalau ditampilkan sebagai baris di kanan: butuh ~426px, sementara ruang di kanan menu tengah maksimal ~381px karena barnya dibatasi `max-w-6xl`. Jadi dipakai disclosure — klik Bantuan, panel turun berisi keempat link dengan ikonnya. Panel menutup saat klik di luar atau tekan Escape.
+- Link-nya dari `helpLinks` (`src/data/nav.ts`), sumber yang sama dengan kolom Bantuan di footer, jadi isinya tidak bisa berbeda.
+- Di HP header ini disembunyikan di route `/` (digantikan app bar + bottom nav). Di route lain (`/bayar`, `/cek-transaksi`) header tetap tampil, dan link bantuan/legal-nya bisa diakses dari footer.
+
 ## Mobile: app home
 
 Di layar HP, home page bukan landing page lagi — tapi **app home** yang mengikuti
@@ -146,7 +155,7 @@ Picker operator di section produk menampilkan logo provider, bukan cuma nama.
 
 Lihat `src/lib/site.ts` → `externalLinks`. Semua nilai di sana masih `"#"` seperti di HTML asli:
 
-`login`, `signUp` (tujuan tombol "Daftar Sekarang"), `allProducts`, `helpCenter`, `contact`, `terms`, `privacy`, `whatsapp`, `email`.
+`signUp` (tujuan tombol CTA di section Daftar), `allProducts`, `helpCenter`, `contact`, `terms`, `privacy`, `whatsapp`, `email`.
 
 Selain itu:
 

@@ -1,18 +1,16 @@
-import { footerMenu } from "@/data/nav";
+import { footerMenu, helpLinks } from "@/data/nav";
 import { socialLinks } from "@/data/payment-methods";
-import { externalLinks, siteConfig } from "@/lib/site";
+import { siteConfig } from "@/lib/site";
 
 import { SocialIcon } from "@/components/icons";
 import { Logo } from "./Logo";
 
-const helpMenu = [
-  /** The mobile app home reaches this from its tab bar; desktop from here. */
-  { label: "Cek Transaksi", href: "/cek-transaksi" },
-  { label: "Pusat Bantuan", href: externalLinks.helpCenter },
-  { label: "Hubungi Kami", href: externalLinks.contact },
-  { label: "Syarat & Ketentuan", href: externalLinks.terms },
-  { label: "Kebijakan Privasi", href: externalLinks.privacy },
-];
+/**
+ * The footer column leads with the transaction lookup — that page is otherwise
+ * reachable only from the mobile tab bar — then the same support and legal links
+ * the header's "Bantuan" disclosure shows.
+ */
+const helpMenu = [{ label: "Cek Transaksi", href: "/cek-transaksi" }, ...helpLinks];
 
 export function Footer() {
   const year = new Date().getFullYear();
