@@ -2,14 +2,15 @@
 
 import { useEffect, useRef, useState } from "react";
 
+import { categoryGradient } from "@/data/categories";
 import { cn } from "@/lib/cn";
 import { formatRupiah } from "@/lib/format";
-import type { CategoryIconId, ProductItem } from "@/types";
+import type { ProductGroup, ProductItem } from "@/types";
 
 import { CategoryIcon } from "@/components/icons";
 
 import { SlideOver } from "./SlideOver";
-import { Button, RupiahInput, TextInput } from "./ui";
+import { Button, RupiahInput, SelectField, TextInput } from "./ui";
 
 interface Draft {
   name: string;
@@ -36,20 +37,40 @@ const EMPTY: Draft = { name: "", headline: "", meta: "", badge: "", price: 0 };
 export function NewProductPanel({
   open,
   onClose,
-  groupLabel,
-  vendorLabel,
-  icon,
-  gradient,
+  groups,
+  defaultGroupId,
   onAdd,
+  onCreateCategory,
 }: {
   open: boolean;
   onClose: () => void;
-  groupLabel: string;
-  vendorLabel?: string;
-  icon: CategoryIconId;
-  gradient: string;
-  onAdd: (item: ProductItem) => void;
+  groups: ProductGroup[];
+  defaultGroupId: string;
+  onAdd: (item: ProductItem, groupId: string, vendorId?: string) => void;
+  onCreateCategory: () => void;
 }) {
+  const [groupId, setGroupId] = useState(defaultGroupId);
+  const [vendorId, setVendorId] = useState<string | undefined>(undefined);
+
+  /*
+   * The category is chosen in here, not only on the page behind: "which tab was
+   * I on?" is not something a form should make anyone remember. Opening the panel
+   * adopts whichever tab is in view, and it can be changed without going back.
+   */
+  useEffect(() => {
+    if (!open) return;
+    setGroupId(defaultGroupId);
+    setVendorId(undefined);
+  }, [open, defaultGroupId]);
+
+  const group = groups.find((entry) => entry.id === groupId) ?? groups[0];
+  const vendors = group?.vendors ?? [];
+  const activeVendorId = vendors.length
+    ? (vendors.find((entry) => entry.id === vendorId)?.id ?? vendors[0].id)
+    : undefined;
+  const activeVendor = vendors.find((entry) => entry.id === activeVendorId);
+  const gradient = categoryGradient(group?.icon ?? "pulsa");
+
   const [draft, setDraft] = useState<Draft>(EMPTY);
   const [touched, setTouched] = useState<Record<string, boolean>>({});
   const [submitted, setSubmitted] = useState(false);
@@ -108,14 +129,18 @@ export function NewProductPanel({
       return;
     }
 
-    onAdd({
-      id: `c-${Date.now().toString(36)}`,
-      name: draft.name.trim(),
-      headline: draft.headline.trim() || undefined,
-      meta: draft.meta.trim() || undefined,
-      badge: draft.badge.trim() || undefined,
-      price: draft.price,
-    });
+    onAdd(
+      {
+        id: `c-${Date.now().toString(36)}`,
+        name: draft.name.trim(),
+        headline: draft.headline.trim() || undefined,
+        meta: draft.meta.trim() || undefined,
+        badge: draft.badge.trim() || undefined,
+        price: draft.price,
+      },
+      group.id,
+      activeVendorId,
+    );
     reset();
     onClose();
   }
@@ -125,7 +150,7 @@ export function NewProductPanel({
       open={open}
       onClose={requestClose}
       title="Tambah produk"
-      description={`Masuk ke ${groupLabel}${vendorLabel ? ` · ${vendorLabel}` : ""}`}
+      description={`Masuk ke ${group?.label ?? "katalog"}${activeVendor ? ` · ${activeVendor.label}` : ""}`}
       footer={
         confirmingDiscard ? (
           <div className="space-y-3">
@@ -160,6 +185,38 @@ export function NewProductPanel({
       }
     >
       <form id="new-product-form" onSubmit={submit} noValidate className="space-y-5">
+        {/* --------------------- Which catalogue this lands in -------------------- */}
+        <div className="grid gap-4 sm:grid-cols-2">
+          <SelectField
+            label="Kategori"
+            required
+            value={group?.id ?? ""}
+            options={groups.map((entry) => ({ value: entry.id, label: entry.label }))}
+            hint="Tempat produk ini muncul di katalog."
+            onChange={(event) => {
+              setGroupId(event.target.value);
+              setVendorId(undefined);
+            }}
+          />
+          {vendors.length > 0 && (
+            <SelectField
+              label={group?.vendorLabel ?? "Vendor"}
+              value={activeVendorId ?? ""}
+              options={vendors.map((entry) => ({ value: entry.id, label: entry.label }))}
+              hint="Produk ini dijual di bawah vendor yang dipilih."
+              onChange={(event) => setVendorId(event.target.value)}
+            />
+          )}
+        </div>
+
+        <button
+          type="button"
+          onClick={onCreateCategory}
+          className="min-h-9 cursor-pointer text-xs font-bold text-brand underline decoration-brand/30 underline-offset-4 transition-colors hover:decoration-brand"
+        >
+          + Kategori belum ada? Buat kategori baru
+        </button>
+
         {/* Live preview of the tile this becomes in the catalogue. */}
         <div>
           <p className="text-xs font-semibold text-muted">Pratinjau di katalog</p>
@@ -169,14 +226,14 @@ export function NewProductPanel({
               className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl"
               style={{ background: gradient }}
             >
-              <CategoryIcon id={icon} />
+              <CategoryIcon id={group?.icon ?? "pulsa"} />
             </span>
             <span className="min-w-0 flex-1">
               <span className="block truncate text-sm font-bold text-ink">
                 {draft.headline.trim() || draft.name.trim() || "Nama produk"}
               </span>
               <span className="block truncate text-xs text-muted">
-                {vendorLabel ?? groupLabel}
+                {activeVendor?.label ?? group?.label ?? "Kategori"}
               </span>
             </span>
             <span className="shrink-0 text-sm font-extrabold text-brand tabular-nums">

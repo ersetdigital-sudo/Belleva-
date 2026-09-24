@@ -6,8 +6,20 @@ import { redirect } from "next/navigation";
 
 import { destroyImage, createUploadSignature } from "./cloudinary";
 import { ORDER_STATUSES } from "@/lib/orders";
-import { defaultPrices, type CatalogueOverrides, type PriceOverrides } from "@/lib/products";
-import type { ProductItem } from "@/types";
+import { defaultPrices, CUSTOM_CARD_STYLES, type CatalogueOverrides, type PriceOverrides } from "@/lib/products";
+import type { CategoryIconId, ProductGroup, ProductItem } from "@/types";
+
+/** Icons a category may use — the same set the catalogue renders. */
+const CATEGORY_ICONS: CategoryIconId[] = [
+  "pulsa",
+  "paket-data",
+  "pln",
+  "pdam",
+  "bpjs",
+  "internet",
+  "e-money",
+  "multifinance",
+];
 import {
   SESSION_COOKIE,
   createSessionToken,
@@ -145,7 +157,7 @@ export async function saveContactsAction(
  */
 export async function saveCatalogueAction(
   overrides: CatalogueOverrides,
-): Promise<{ ok: boolean; message?: string; changed?: number; added?: number; hidden?: number }> {
+): Promise<{ ok: boolean; message?: string; changed?: number; added?: number; hidden?: number; groups?: number }> {
   await requireAdmin();
 
   try {
@@ -180,10 +192,47 @@ export async function saveCatalogueAction(
       .filter((key) => typeof key === "string" && key.length < 120)
       .slice(0, 500);
 
+    /*
+     * Categories the admin created. A new category has to be a working catalogue
+     * entry, not just a label, so anything without a name and a customer field is
+     * dropped rather than saved half-formed.
+     *
+     * Postpaid is not accepted: a bill inquiry needs a bill to inquire, and there
+     * is none behind a category that exists only here.
+     */
+    const addedGroups: ProductGroup[] = [];
+    for (const group of (overrides.addedGroups ?? []).slice(0, 12)) {
+      const label = group.label?.trim().slice(0, 40);
+      const fieldLabel = group.customer?.label?.trim().slice(0, 40);
+      if (!group.id || !label || !fieldLabel) continue;
+
+      const card = CUSTOM_CARD_STYLES.find((style) => style.value === group.card)?.value ?? "row";
+
+      addedGroups.push({
+        id: String(group.id).slice(0, 40),
+        icon: (CATEGORY_ICONS as readonly string[]).includes(group.icon)
+          ? group.icon
+          : "pulsa",
+        label,
+        title: group.title?.trim().slice(0, 60) || label,
+        subtitle: group.subtitle?.trim().slice(0, 140) || "",
+        flow: "prepaid",
+        customer: {
+          label: fieldLabel,
+          placeholder: group.customer?.placeholder?.trim().slice(0, 40) || fieldLabel,
+          minLength: 4,
+          maxLength: 24,
+          hint: group.customer?.hint?.trim().slice(0, 140) || `Pastikan ${fieldLabel} benar.`,
+        },
+        card,
+        items: [],
+      });
+    }
+
     const { error } = await supabase
       .from("site_content")
       .upsert(
-        { key: "product_catalogue", data: { prices, addedItems, hiddenItems } },
+        { key: "product_catalogue", data: { prices, addedItems, hiddenItems, addedGroups } },
         { onConflict: "key" },
       );
     if (error) return { ok: false, message: error.message };
@@ -195,6 +244,7 @@ export async function saveCatalogueAction(
       changed: Object.keys(prices).length,
       added: Object.values(addedItems).flat().length,
       hidden: hiddenItems.length,
+      groups: addedGroups.length,
     };
   } catch (error) {
     return { ok: false, message: error instanceof Error ? error.message : "Gagal menyimpan." };

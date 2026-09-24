@@ -26,9 +26,25 @@ export interface CatalogueOverrides {
   addedItems: Record<string, ProductItem[]>;
   /** Keys of shipped items the admin removed. */
   hiddenItems: string[];
+  /** Whole categories created from the admin. The admin owns these, so they are removed outright. */
+  addedGroups: ProductGroup[];
 }
 
-export const emptyOverrides: CatalogueOverrides = { prices: {}, addedItems: {}, hiddenItems: [] };
+export const emptyOverrides: CatalogueOverrides = {
+  prices: {},
+  addedItems: {},
+  hiddenItems: [],
+  addedGroups: [],
+};
+
+/** Card styles a new category may use. Postpaid is not offered: a made-up category has no bill to inquire. */
+export const CUSTOM_CARD_STYLES = [
+  { value: "row", label: "Daftar baris", hint: "Satu baris per produk — rapi untuk daftar panjang." },
+  { value: "tile", label: "Kartu besar", hint: "Kartu dengan angka besar — cocok untuk paket atau kuota." },
+  { value: "money", label: "Nominal uang", hint: "Kotak nominal — cocok untuk saldo dan voucher." },
+] as const;
+
+export type CustomCard = (typeof CUSTOM_CARD_STYLES)[number]["value"];
 
 export function priceKey(groupId: string, vendorId: string | undefined, itemId: string): string {
   return `${groupId}/${vendorId ?? "-"}/${itemId}`;
@@ -65,6 +81,7 @@ export async function getCatalogueOverrides(): Promise<CatalogueOverrides> {
       prices: stored.prices ?? {},
       addedItems: stored.addedItems ?? {},
       hiddenItems: stored.hiddenItems ?? [],
+      addedGroups: stored.addedGroups ?? [],
     };
   } catch {
     return emptyOverrides;
@@ -87,9 +104,9 @@ function build(groupId: string, vendorId: string | undefined, shipped: ProductIt
     .map((item) => withPrice(item, priceKey(groupId, vendorId, item.id), o.prices));
 }
 
-/** The shipped catalogue with prices, additions and removals applied. */
+/** The shipped catalogue plus the admin's own categories, with overrides applied. */
 export function applyCatalogue(overrides: CatalogueOverrides = emptyOverrides): ProductGroup[] {
-  return productGroups.map((group) => {
+  const shipped = productGroups.map((group) => {
     const vendors = group.vendors?.map((vendor) => ({
       ...vendor,
       items: vendor.items ? build(group.id, vendor.id, vendor.items, overrides) : vendor.items,
@@ -101,6 +118,13 @@ export function applyCatalogue(overrides: CatalogueOverrides = emptyOverrides): 
 
     return { ...group, items, vendors };
   });
+
+  const custom = overrides.addedGroups.map((group) => ({
+    ...group,
+    items: build(group.id, undefined, group.items ?? [], overrides),
+  }));
+
+  return [...shipped, ...custom];
 }
 
 export async function getCatalogue(): Promise<ProductGroup[]> {

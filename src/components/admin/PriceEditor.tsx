@@ -20,6 +20,7 @@ import {
   UndoIcon,
 } from "@/components/icons";
 
+import { NewCategoryPanel } from "./NewCategoryPanel";
 import { NewProductPanel } from "./NewProductPanel";
 import { useToast } from "./Toast";
 import { Button, RupiahInput, SaveBar, Stat } from "./ui";
@@ -73,17 +74,38 @@ export function PriceEditor({
   const [prices, setPrices] = useState<PriceOverrides>({ ...defaults });
   const [addedItems, setAddedItems] = useState(overrides.addedItems);
   const [hiddenItems, setHiddenItems] = useState<string[]>(overrides.hiddenItems);
+  const [addedGroups, setAddedGroups] = useState(overrides.addedGroups);
   const [panelOpen, setPanelOpen] = useState(false);
+  const [categoryOpen, setCategoryOpen] = useState(false);
+
+  /*
+   * The server sends the shipped catalogue plus whatever was saved last time; a
+   * category created in this session only exists here until it is saved, so the
+   * two lists are merged for display without double-counting one that is in both.
+   */
+  const allGroups = useMemo(
+    () => [
+      ...groups,
+      ...addedGroups.filter((entry) => !groups.some((saved) => saved.id === entry.id)),
+    ],
+    [groups, addedGroups],
+  );
 
   /** Snapshot of what is on the server, so "dirty" and "batal" have a target. */
   const saved = useMemo(
-    () => JSON.stringify({ prices: { ...defaults }, addedItems: overrides.addedItems, hiddenItems: overrides.hiddenItems }),
+    () =>
+      JSON.stringify({
+        prices: { ...defaults },
+        addedItems: overrides.addedItems,
+        hiddenItems: overrides.hiddenItems,
+        addedGroups: overrides.addedGroups,
+      }),
     [defaults, overrides],
   );
-  const current = JSON.stringify({ prices, addedItems, hiddenItems });
+  const current = JSON.stringify({ prices, addedItems, hiddenItems, addedGroups });
   const dirty = current !== saved;
 
-  const group = groups.find((entry) => entry.id === groupId) ?? groups[0];
+  const group = allGroups.find((entry) => entry.id === groupId) ?? allGroups[0];
   const vendors = group.vendors ?? [];
   const activeVendorId = vendors.length
     ? (vendors.find((entry) => entry.id === vendorId)?.id ?? vendors[0].id)
@@ -137,17 +159,56 @@ export function PriceEditor({
     setPrices({ ...defaults });
     setAddedItems(overrides.addedItems);
     setHiddenItems(overrides.hiddenItems);
+    setAddedGroups(overrides.addedGroups);
   }
 
   function setPrice(key: string, value: number) {
     setPrices((prev) => ({ ...prev, [key]: value }));
   }
 
-  function addItem(item: ProductItem) {
-    setAddedItems((prev) => ({ ...prev, [bucket]: [...(prev[bucket] ?? []), item] }));
-    toast.success(`${item.name} ditambahkan`, {
-      description: "Belum tersimpan — sudah masuk daftar di katalog.",
+  function labelOf(groupId: string) {
+    return allGroups.find((entry) => entry.id === groupId)?.label ?? "katalog";
+  }
+
+  /**
+   * The panel reports which category the product was meant for, so adding one
+   * while looking at a different tab still lands where the form said it would.
+   */
+  function addItem(item: ProductItem, targetGroupId: string, targetVendorId?: string) {
+    const key = bucketKey(targetGroupId, targetVendorId);
+    setAddedItems((prev) => ({ ...prev, [key]: [...(prev[key] ?? []), item] }));
+    toast.success(`${item.name} ditambahkan ke ${labelOf(targetGroupId)}`, {
+      description: "Belum tersimpan — produknya sudah ada di daftar.",
       action: { label: "Simpan sekarang", onClick: () => void save() },
+    });
+  }
+
+  function createCategory(category: ProductGroup) {
+    setAddedGroups((prev) => [...prev, category]);
+    setGroupId(category.id);
+    setVendorId(undefined);
+    toast.success(`Kategori ${category.label} dibuat`, {
+      description: "Belum tersimpan, dan masih kosong. Tambahkan produknya sekarang.",
+      action: { label: "Tambah produk", onClick: () => setPanelOpen(true) },
+    });
+  }
+
+  function removeCategory(id: string) {
+    const removed = addedGroups.find((entry) => entry.id === id);
+    if (!removed) return;
+
+    setAddedGroups((prev) => prev.filter((entry) => entry.id !== id));
+    setAddedItems((prev) => {
+      const next = { ...prev };
+      for (const key of Object.keys(next)) if (key.startsWith(`${id}/`)) delete next[key];
+      return next;
+    });
+    setGroupId(allGroups.find((entry) => entry.id !== id)?.id ?? "");
+    setVendorId(undefined);
+
+    toast.info(`Kategori ${removed.label} dihapus`, {
+      description: "Beserta produk di dalamnya. Belum tersimpan selama belum di-Simpan.",
+      action: { label: "Urungkan", onClick: () => setAddedGroups((prev) => [...prev, removed]) },
     });
   }
 
@@ -198,7 +259,7 @@ export function PriceEditor({
 
   async function save() {
     setBusy(true);
-    const result = await saveCatalogueAction({ prices, addedItems, hiddenItems });
+    const result = await saveCatalogueAction({ prices, addedItems, hiddenItems, addedGroups });
     setBusy(false);
 
     if (!result.ok) {
@@ -210,8 +271,9 @@ export function PriceEditor({
 
     toast.success("Katalog tersimpan", {
       description:
-        `${result.changed ?? 0} harga diubah · ${result.added ?? 0} produk tambahan · ${result.hidden ?? 0} disembunyikan. ` +
-        "Situs dan halaman bayar langsung memakainya.",
+        `${result.changed ?? 0} harga diubah · ${result.added ?? 0} produk tambahan · ${result.groups ?? 0} kategori buatan sendiri` +
+        (result.hidden ? ` · ${result.hidden} disembunyikan` : "") +
+        ". Situs dan halaman bayar langsung memakainya.",
     });
   }
 
@@ -282,7 +344,7 @@ export function PriceEditor({
 
       {/* --------------------------- Group pills --------------------------- */}
       <div className="no-scrollbar -mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
-        {groups.map((entry) => {
+        {allGroups.map((entry) => {
           const vendor = entry.vendors?.[0];
           const count = (entry.items ?? vendor?.items ?? []).length;
           const active = entry.id === group.id;
@@ -364,6 +426,23 @@ export function PriceEditor({
                 ))}
               </ul>
             </fieldset>
+          )}
+
+          {addedGroups.some((entry) => entry.id === group.id) && (
+            <div className="mt-5 border-t border-line-2 pt-4">
+              <button
+                type="button"
+                onClick={() => removeCategory(group.id)}
+                className="inline-flex min-h-11 w-full cursor-pointer items-center justify-center gap-1.5 rounded-xl border border-line text-xs font-semibold text-danger transition-colors hover:border-danger hover:bg-danger-soft"
+              >
+                <TrashIcon />
+                Hapus kategori ini
+              </button>
+              <p className="mt-2 text-[11px] leading-relaxed text-muted">
+                {group.label} dibuat dari panel ini, jadi menghapusnya sekaligus menghapus produk di
+                dalamnya.
+              </p>
+            </div>
           )}
 
           <label className="mt-5 flex min-h-11 cursor-pointer items-center gap-2.5 border-t border-line-2 pt-4 text-sm font-semibold">
@@ -485,11 +564,19 @@ export function PriceEditor({
       <NewProductPanel
         open={panelOpen}
         onClose={() => setPanelOpen(false)}
-        groupLabel={group.label}
-        vendorLabel={activeVendor?.label}
-        icon={group.icon}
-        gradient={categoryGradient(group.icon as CategoryIconId)}
+        groups={allGroups}
+        defaultGroupId={group.id}
         onAdd={addItem}
+        onCreateCategory={() => {
+          setPanelOpen(false);
+          setCategoryOpen(true);
+        }}
+      />
+
+      <NewCategoryPanel
+        open={categoryOpen}
+        onClose={() => setCategoryOpen(false)}
+        onCreate={createCategory}
       />
 
       {hiddenItems.length > 0 && (

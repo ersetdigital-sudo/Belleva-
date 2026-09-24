@@ -172,6 +172,37 @@ Dua dokumen legal yang sebelumnya masih `"#"` di `externalLinks`, sekarang route
 
 **TODO(legal): kedua dokumen ini belum ditinjau penasihat hukum.** Kalimatnya ditulis supaya aman dan sesuai perilaku aplikasi, tapi klausul soal pembatalan/pengembalian dana, retensi data, dan yurisdiksi tetap harus diperiksa sebelum diandalkan.
 
+## Panel admin (/admin)
+
+Masuk lewat `/admin/login` dengan satu password (`ADMIN_PASSWORD` di Vercel, bawaan
+`belleva-admin-2026`), sesi 12 jam lewat cookie HttpOnly bertanda tangan HMAC. Panelnya punya
+chrome sendiri — sidebar dan top bar — jadi navbar dan footer situs tidak pernah muncul di sini.
+
+- **Ringkasan** — angka kunci plus pintasan ke tiap halaman.
+- **Produk & harga** — ubah harga, tambah produk, sembunyikan produk bawaan, dan buat kategori
+  sendiri.
+- **Kelola pesanan** — cari, filter, dan ubah status pesanan. Perubahannya ikut terlihat di
+  `/cek-transaksi` pembeli.
+- **Pembayaran** — nama metode, langkah pembayaran, nomor rekening, dan unggah gambar QRIS
+  (Cloudinary unsigned; gambarnya dihapus dari Cloudinary saat diganti).
+- **Kontak** — WhatsApp, email, dan tautan halaman.
+
+Katalognya satu baris `site_content` ber-key `product_catalogue` berisi `prices` (hanya yang beda
+dari bawaan), `addedItems`, `hiddenItems`, dan `addedGroups`. Katalog di beranda dan halaman bayar
+membaca hasil yang sama, jadi harga yang tampil dan yang ditagih tidak bisa berbeda.
+
+**Kategori buatan sendiri** (`addedGroups`) dibuat dari panel tanpa deploy: nama, ikon, nama kolom
+nomor pelanggan, contoh isian, keterangan, dan gaya tampilan produk. Hanya alur **prabayar** yang
+ditawarkan — kategori pascabayar akan menjanjikan pengecekan tagihan untuk tagihan yang tidak ada.
+`ProductGroupId` sengaja diakhiri `(string & {})` supaya id bawaan tetap punya autocomplete
+sementara id buatan panel tetap diterima.
+
+Form tambah produk memilih kategorinya sendiri (terisi tab yang sedang dibuka, dan bisa diganti di
+situ), karena "tadi saya ada di tab mana" bukan hal yang pantas diingat-ingat user. Tombol simpan
+selalu menyatakan apakah ada perubahan yang belum disimpan, dan setiap aksi melapor lewat toast
+yang bisa membawa satu langkah lanjutan: **Urungkan** untuk sembunyikan/hapus, **Simpan sekarang**
+setelah menambah produk.
+
 ## Cara maintain
 
 - **Nambah operator / denominasi / paket data** → edit `src/data/products.ts` (termasuk `operatorPrefixes` buat deteksi).

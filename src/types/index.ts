@@ -14,6 +14,13 @@ export type CategoryIconId =
  * Every transactable catalogue. Grouped the way marketplace PPOB apps do it:
  * prepaid goods you top up with a nominal, and postpaid bills you look up first.
  */
+/**
+ * Shipped catalogue ids, plus whatever the admin creates in the panel.
+ *
+ * The trailing `(string & {})` is deliberate: it keeps autocomplete for the
+ * shipped ids while still accepting a custom one, which is what lets a category
+ * be added from the panel without a deploy.
+ */
 export type ProductGroupId =
   | "pulsa"
   | "data"
@@ -23,7 +30,8 @@ export type ProductGroupId =
   | "bpjs"
   | "internet"
   | "emoney"
-  | "multifinance";
+  | "multifinance"
+  | (string & {});
 
 /** Prepaid = pick a nominal then pay. Postpaid = "Cek Tagihan" then pay. */
 export type FlowKind = "prepaid" | "postpaid";

@@ -311,8 +311,55 @@ export function RupiahInput({
   );
 }
 
-/* --------------------------------- Save bar -------------------------------- */
+interface SelectFieldProps extends React.SelectHTMLAttributes<HTMLSelectElement> {
+  label: string;
+  hint?: string;
+  error?: string;
+  options: { value: string; label: string }[];
+}
 
+export function SelectField({
+  label,
+  hint,
+  error,
+  required,
+  options,
+  className,
+  id,
+  ...props
+}: SelectFieldProps) {
+  const reactId = useId();
+  const fieldId = id ?? reactId;
+  const describedBy = hint || error ? `${fieldId}-desc` : undefined;
+
+  return (
+    <FieldShell
+      label={label}
+      hint={hint}
+      error={error}
+      required={required}
+      htmlFor={fieldId}
+      describedBy={describedBy}
+    >
+      <select
+        {...props}
+        id={fieldId}
+        required={required}
+        aria-invalid={error ? true : undefined}
+        aria-describedby={describedBy}
+        className={cn(CONTROL, "cursor-pointer", error && "border-danger", className)}
+      >
+        {options.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
+    </FieldShell>
+  );
+}
+
+/* --------------------------------- Save bar -------------------------------- */
 /**
  * The one save affordance on a page. It reports whether there is anything to
  * save, so a disabled button never leaves the reader guessing why.
