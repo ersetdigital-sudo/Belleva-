@@ -84,6 +84,8 @@ export interface ProductItem {
 export interface Vendor {
   id: string;
   label: string;
+  /** Public path to the vendor's logo; falls back to a monogram when absent. */
+  logo?: string;
   /** MSISDN prefixes used for operator auto-detection, e.g. "0812". */
   prefixes?: string[];
   items?: ProductItem[];

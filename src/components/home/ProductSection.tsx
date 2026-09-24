@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { motion, useReducedMotion } from "motion/react";
 
@@ -115,6 +116,8 @@ export function ProductSection() {
   const isUnknownNumber = isPhone && customer.length >= 4 && detectedVendorId === null;
   const customerError = customerTouched && customer.length > 0 && !isCustomerValid;
   const useSelectPicker = vendors.length > 6 || vendors.some((entry) => entry.label.length > 22);
+  /** Operators carry brand logos; the other vendor lists are names only. */
+  const hasVendorLogos = vendors.some((entry) => entry.logo);
 
   const isPrepaid = group.flow === "prepaid";
   const hasVendorStep = Boolean(group.vendorLabel && vendors.length > 0);
@@ -242,7 +245,7 @@ export function ProductSection() {
           isPrepaid ? "lg:grid-cols-[minmax(0,380px)_minmax(0,1fr)]" : "lg:max-w-3xl",
         )}
       >
-        <div className="card p-5 sm:p-6 lg:sticky lg:top-24">
+        <div className="@container card p-5 sm:p-6 lg:sticky lg:top-24">
           {/* ---------------------- Vendor / region picker ------------------ */}
           {group.vendorLabel && vendors.length > 0 && (
             <Step index={1} label={group.vendorLabel}>
@@ -263,6 +266,80 @@ export function ProductSection() {
                     </option>
                   ))}
                 </select>
+              ) : hasVendorLogos ? (
+                /*
+                 * Logo tiles rather than pills. Several operator marks ship on
+                 * their own solid brand background, which cannot sit inside the
+                 * filled blue pill the selected state uses — so the tile keeps a
+                 * neutral surface and selection is carried by the border, a ring
+                 * and the label colour instead.
+                 */
+                <div
+                  role="group"
+                  aria-label={`Pilih ${group.vendorLabel}`}
+                  className="grid grid-cols-3 gap-2 @md:grid-cols-6"
+                >
+                  {vendors.map((entry) => {
+                    const selected = entry.id === vendor?.id;
+                    const isAuto = isPhone && entry.id === detectedVendorId;
+                    return (
+                      <button
+                        key={entry.id}
+                        type="button"
+                        aria-pressed={selected}
+                        aria-label={entry.label}
+                        onClick={() => {
+                          setVendorOverride(entry.id);
+                          resetInquiry();
+                        }}
+                        className={cn(
+                          "flex min-h-[86px] flex-col items-center gap-1.5 rounded-2xl border px-2 py-3 transition",
+                          "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand",
+                          selected
+                            ? "border-brand bg-soft ring-1 ring-brand"
+                            : "border-line bg-white hover:border-line-2 hover:bg-soft",
+                        )}
+                      >
+                        <span className="grid h-11 w-full place-items-center rounded-xl bg-soft">
+                          {entry.logo ? (
+                            /*
+                             * Capped with explicit max-* values, not `h-full`:
+                             * a percentage height against a centred grid area
+                             * does not bind, so the image fell back to its own
+                             * aspect ratio and spilled past the box.
+                             */
+                            <Image
+                              src={entry.logo}
+                              alt=""
+                              width={192}
+                              height={96}
+                              className="max-h-9 max-w-full object-contain"
+                            />
+                          ) : (
+                            <span className="text-sm font-extrabold text-muted">
+                              {entry.label.slice(0, 1)}
+                            </span>
+                          )}
+                        </span>
+
+                        <span
+                          className={cn(
+                            "text-center text-[11px] leading-tight font-semibold",
+                            selected ? "text-brand" : "text-muted",
+                          )}
+                        >
+                          {entry.label}
+                        </span>
+
+                        {isAuto && selected && (
+                          <span className="text-[9px] leading-none font-bold tracking-wide text-brand uppercase">
+                            auto
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
               ) : (
                 <div role="group" aria-label={`Pilih ${group.vendorLabel}`} className="flex flex-wrap gap-2">
                   {vendors.map((entry) => {

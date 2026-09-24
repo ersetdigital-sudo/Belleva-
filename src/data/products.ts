@@ -39,18 +39,48 @@ function paketData(prices: number[]): Vendor["items"] {
   });
 }
 
+/**
+ * Operator logos live in `public/images/operator/`. Smartfren has no file yet,
+ * so its tile falls back to a monogram — drop `smartfren.png` in that folder
+ * (trimmed, transparent background, ~96px tall) and add the path here.
+ */
 const operatorVendors: Vendor[] = [
   {
     id: "telkomsel",
     label: "Telkomsel",
+    logo: "/images/operator/telkomsel.png",
     prefixes: PREFIXES.telkomsel,
     baseAmount: 55000,
   },
-  { id: "xl", label: "XL", prefixes: PREFIXES.xl, baseAmount: 45000 },
-  { id: "indosat", label: "Indosat", prefixes: PREFIXES.indosat, baseAmount: 50000 },
-  { id: "tri", label: "Tri", prefixes: PREFIXES.tri, baseAmount: 40000 },
+  {
+    id: "xl",
+    label: "XL",
+    logo: "/images/operator/xl.png",
+    prefixes: PREFIXES.xl,
+    baseAmount: 45000,
+  },
+  {
+    id: "indosat",
+    label: "Indosat",
+    logo: "/images/operator/indosat.png",
+    prefixes: PREFIXES.indosat,
+    baseAmount: 50000,
+  },
+  {
+    id: "tri",
+    label: "Tri",
+    logo: "/images/operator/tri.png",
+    prefixes: PREFIXES.tri,
+    baseAmount: 40000,
+  },
   { id: "smartfren", label: "Smartfren", prefixes: PREFIXES.smartfren, baseAmount: 45000 },
-  { id: "axis", label: "Axis", prefixes: PREFIXES.axis, baseAmount: 38000 },
+  {
+    id: "axis",
+    label: "Axis",
+    logo: "/images/operator/axis.png",
+    prefixes: PREFIXES.axis,
+    baseAmount: 38000,
+  },
 ];
 
 // Per-operator nominals. Only the Telkomsel pulsa prices come from the source

@@ -121,6 +121,16 @@ Tab-nya berlabel **"Transaksi"**, bukan "Cek Transaksi": lima tab di layar 360px
 hanya memberi 68px per tab sementara label panjangnya butuh ~71px, jadi labelnya
 turun ke baris kedua dan ikonnya jadi tidak sejajar dengan tab lain.
 
+## Logo operator
+
+Picker operator di section produk menampilkan logo provider, bukan cuma nama.
+
+- Filenya di `public/images/operator/`: `telkomsel.png`, `xl.png`, `indosat.png`, `tri.png`, `axis.png`. Semuanya sudah dipotong margin transparannya dan diseragamkan tingginya (96px), total ~38 KB.
+- Path-nya di-set di `operatorVendors` (`src/data/products.ts`). Begitu ada satu vendor yang punya `logo`, picker-nya otomatis berubah dari pill jadi grid kartu logo.
+- **Kenapa grid, bukan pill:** beberapa logo (Indosat, Axis) membawa background brand-nya sendiri berupa blok warna solid, dan itu tidak bisa ditaruh di dalam pill biru yang dipakai state terpilih. Jadi tile-nya pakai permukaan netral, dan state terpilih ditandai border + ring + warna label.
+- **Kenapa container query, bukan breakpoint layar:** di desktop kartu form-nya cuma 380px, jadi `sm:grid-cols-6` bikin tiap tile 57px. Grid-nya ikut lebar kartu (`@container` + `@md:grid-cols-6`): 3 kolom di kartu sempit, 6 kolom kalau kartunya lebar.
+- **Smartfren belum ada logonya** — tile-nya sementara pakai monogram huruf awal. Taruh `smartfren.png` (transparan, sudah di-trim, ~96px tinggi) di folder itu lalu tambahkan `logo` di `operatorVendors`.
+
 ## Cara maintain
 
 - **Nambah operator / denominasi / paket data** → edit `src/data/products.ts` (termasuk `operatorPrefixes` buat deteksi).
