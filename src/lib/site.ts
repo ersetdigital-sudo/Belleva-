@@ -29,8 +29,8 @@ export const externalLinks = {
   allProducts: "#",
   /** The help centre is a real route, so this one is wired up. */
   helpCenter: "/pusat-bantuan",
-  /** Route the contact page will live at, once the channel exists. */
-  contact: "#",
+  /** Contact page. Its contents come from the admin panel, so it works even before a number exists. */
+  contact: "/hubungi-kami",
   /** Both legal documents are real routes. */
   terms: "/syarat-ketentuan",
   privacy: "/kebijakan-privasi",

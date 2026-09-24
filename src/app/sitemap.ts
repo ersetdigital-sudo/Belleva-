@@ -18,6 +18,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.5,
     },
     {
+      url: `${siteConfig.url}/hubungi-kami`,
+      lastModified: new Date(),
+      changeFrequency: "monthly",
+      priority: 0.4,
+    },
+    {
       url: `${siteConfig.url}/syarat-ketentuan`,
       lastModified: new Date(),
       changeFrequency: "yearly",
