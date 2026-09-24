@@ -40,9 +40,8 @@ function paketData(prices: number[]): Vendor["items"] {
 }
 
 /**
- * Operator logos live in `public/images/operator/`. Smartfren has no file yet,
- * so its tile falls back to a monogram — drop `smartfren.png` in that folder
- * (trimmed, transparent background, ~96px tall) and add the path here.
+ * Operator logos live in `public/images/operator/`. See the README for how they
+ * are prepared — trimmed of transparent margins and normalised to 96px tall.
  */
 const operatorVendors: Vendor[] = [
   {
@@ -73,7 +72,13 @@ const operatorVendors: Vendor[] = [
     prefixes: PREFIXES.tri,
     baseAmount: 40000,
   },
-  { id: "smartfren", label: "Smartfren", prefixes: PREFIXES.smartfren, baseAmount: 45000 },
+  {
+    id: "smartfren",
+    label: "Smartfren",
+    logo: "/images/operator/smartfren.png",
+    prefixes: PREFIXES.smartfren,
+    baseAmount: 45000,
+  },
   {
     id: "axis",
     label: "Axis",

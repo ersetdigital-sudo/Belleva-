@@ -125,11 +125,14 @@ turun ke baris kedua dan ikonnya jadi tidak sejajar dengan tab lain.
 
 Picker operator di section produk menampilkan logo provider, bukan cuma nama.
 
-- Filenya di `public/images/operator/`: `telkomsel.png`, `xl.png`, `indosat.png`, `tri.png`, `axis.png`. Semuanya sudah dipotong margin transparannya dan diseragamkan tingginya (96px), total ~38 KB.
-- Path-nya di-set di `operatorVendors` (`src/data/products.ts`). Begitu ada satu vendor yang punya `logo`, picker-nya otomatis berubah dari pill jadi grid kartu logo.
+- Filenya di `public/images/operator/`: `telkomsel.png`, `xl.png`, `indosat.png`, `tri.png`, `smartfren.png`, `axis.png`. Semuanya sudah dipotong margin transparannya dan diseragamkan tingginya (96px), total ~41 KB.
+- `logo` di-set per vendor di `operatorVendors` (`src/data/products.ts`). Begitu ada satu vendor yang punya `logo`, picker-nya otomatis berubah dari pill jadi grid kartu logo; vendor tanpa `logo` jatuh ke monogram huruf awal.
 - **Kenapa grid, bukan pill:** beberapa logo (Indosat, Axis) membawa background brand-nya sendiri berupa blok warna solid, dan itu tidak bisa ditaruh di dalam pill biru yang dipakai state terpilih. Jadi tile-nya pakai permukaan netral, dan state terpilih ditandai border + ring + warna label.
 - **Kenapa container query, bukan breakpoint layar:** di desktop kartu form-nya cuma 380px, jadi `sm:grid-cols-6` bikin tiap tile 57px. Grid-nya ikut lebar kartu (`@container` + `@md:grid-cols-6`): 3 kolom di kartu sempit, 6 kolom kalau kartunya lebar.
-- **Smartfren belum ada logonya** — tile-nya sementara pakai monogram huruf awal. Taruh `smartfren.png` (transparan, sudah di-trim, ~96px tinggi) di folder itu lalu tambahkan `logo` di `operatorVendors`.
+- **Asetnya dari agregator pihak ketiga, bukan halaman brand resmi.** Dua hal yang perlu diketahui:
+  - File Smartfren aslinya membawa watermark zonalogo.com — kotak solid di pojok kanan bawah (x 110–132, y 102–123). Sudah dihapus di `public/images/operator/smartfren.png`, setelah dipastikan area itu tidak bersinggungan dengan logo (di baris tersebut logonya cuma ada di x 90–96).
+  - `theree.png` sebenarnya brand "Three" versi luar negeri, bukan logo Tri Indonesia, dan bentuknya mark hitam monokrom.
+  Kalau ada aset resmi dari halaman brand masing-masing operator, tinggal ganti filenya — nama dan path-nya tidak perlu diubah.
 
 ## Cara maintain
 
