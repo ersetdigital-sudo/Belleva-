@@ -3,6 +3,7 @@ import Image from "next/image";
 import { redirect } from "next/navigation";
 
 import { AdminNav, AdminTopbar } from "@/components/admin/AdminChrome";
+import { ToastProvider } from "@/components/admin/Toast";
 import { PrivacyShieldIcon } from "@/components/icons";
 import { logoutAction } from "@/lib/admin/actions";
 import { isSignedIn } from "@/lib/admin/session";
@@ -69,7 +70,10 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
 
       <div className="min-h-dvh min-w-0 flex-1 bg-soft lg:pl-64">
         <AdminTopbar />
-        <div className="px-5 py-8 sm:px-8">{children}</div>
+        {/* Toasts live inside the panel shell, so they sit above every admin page. */}
+        <ToastProvider>
+          <div className="px-5 py-8 sm:px-8">{children}</div>
+        </ToastProvider>
       </div>
     </div>
   );

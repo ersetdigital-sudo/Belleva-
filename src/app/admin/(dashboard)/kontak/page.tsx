@@ -1,4 +1,5 @@
 import { ContactsForm } from "@/components/admin/ContactsForm";
+import { PageHeader } from "@/components/admin/ui";
 import { getContacts } from "@/lib/settings";
 
 export default async function AdminKontakPage() {
@@ -6,11 +7,10 @@ export default async function AdminKontakPage() {
 
   return (
     <div>
-      <h2 className="h-display text-xl font-extrabold">Kontak</h2>
-      <p className="mt-1.5 text-sm text-muted">
-        Nomor WhatsApp dan tautan bantuan yang dipakai di header, footer, halaman bantuan, dan
-        halaman legal.
-      </p>
+      <PageHeader
+        title="Kontak"
+        description="Nomor WhatsApp dan tautan bantuan yang dipakai di header, footer, halaman bantuan, dan halaman legal."
+      />
 
       <div className="mt-6">
         <ContactsForm initial={contacts} />

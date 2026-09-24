@@ -355,6 +355,110 @@ export function StarIcon() {
   );
 }
 
+export function AlertIcon({ size = 16, className }: { size?: number; className?: string }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.2"
+      strokeLinecap="round"
+      aria-hidden="true"
+      className={className}
+    >
+      <path d="M12 8v5" />
+      <path d="M12 16.5h.01" />
+      <circle cx="12" cy="12" r="9" />
+    </svg>
+  );
+}
+
+export function InfoIcon({ size = 16, className }: { size?: number; className?: string }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.2"
+      strokeLinecap="round"
+      aria-hidden="true"
+      className={className}
+    >
+      <path d="M12 11v5" />
+      <path d="M12 7.5h.01" />
+      <circle cx="12" cy="12" r="9" />
+    </svg>
+  );
+}
+
+export function TrashIcon({ size = 15, className }: { size?: number; className?: string }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.9"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      className={className}
+    >
+      <path d="M4 7h16" />
+      <path d="M9 7V5h6v2" />
+      <path d="M6 7l1 13h10l1-13" />
+      <path d="M10 11v6M14 11v6" />
+    </svg>
+  );
+}
+
+export function EyeOffIcon({ size = 15, className }: { size?: number; className?: string }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.9"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      className={className}
+    >
+      <path d="M3 3l18 18" />
+      <path d="M10.6 5.3A9.7 9.7 0 0 1 12 5.2c5 0 9 4.1 9 6.8a7.3 7.3 0 0 1-2.2 3.9" />
+      <path d="M6.3 7.6A12 12 0 0 0 3 12c0 2.7 4 6.8 9 6.8a9.6 9.6 0 0 0 4-.9" />
+      <path d="M9.9 10.2a3 3 0 0 0 4.1 4.2" />
+    </svg>
+  );
+}
+
+export function UndoIcon({ size = 15, className }: { size?: number; className?: string }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      className={className}
+    >
+      <path d="M4 9h10a5 5 0 0 1 0 10h-3" />
+      <path d="M8 5 4 9l4 4" />
+    </svg>
+  );
+}
+
 export function CloseIcon({ size = 16 }: { size?: number }) {
   return (
     <svg

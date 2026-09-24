@@ -1,4 +1,5 @@
-import { updateOrderStatusAction } from "@/lib/admin/actions";
+import { OrderStatusButtons } from "@/components/admin/OrderStatusButtons";
+import { PageHeader } from "@/components/admin/ui";
 import { formatDateTime, formatRupiah } from "@/lib/format";
 import { ORDER_STATUSES, getOrders } from "@/lib/orders";
 
@@ -21,39 +22,36 @@ export default async function AdminPesananPage({ searchParams }: PageProps<"/adm
   return (
     <div>
       {/* ------------------------------ Title row ------------------------------ */}
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h2 className="h-display text-xl font-extrabold">Kelola pesanan</h2>
-          <p className="mt-1 text-sm text-muted">
-            Menampilkan {orders.length} dari {total} pesanan
-          </p>
-        </div>
-
-        <form className="flex flex-wrap items-center gap-2">
-          <input
-            type="search"
-            name="q"
-            defaultValue={query}
-            placeholder="Cari nomor referensi atau nomor HP…"
-            aria-label="Cari pesanan"
-            className={`${FIELD} w-64`}
-          />
-          <select name="status" defaultValue={status} aria-label="Status" className={FIELD}>
-            <option value="semua">Semua status</option>
-            {ORDER_STATUSES.map((entry) => (
-              <option key={entry.value} value={entry.value}>
-                {entry.label}
-              </option>
-            ))}
-          </select>
-          <button
-            type="submit"
-            className="blue-grad inline-flex min-h-10 items-center rounded-pill px-5 text-sm font-bold text-white"
-          >
-            Cari
-          </button>
-        </form>
-      </div>
+      <PageHeader
+        title="Kelola pesanan"
+        description={`Menampilkan ${orders.length} dari ${total} pesanan. Status yang kamu ubah di sini langsung terlihat di halaman Cek Transaksi pembeli.`}
+        actions={
+          <form className="flex flex-wrap items-center gap-2">
+            <input
+              type="search"
+              name="q"
+              defaultValue={query}
+              placeholder="Cari referensi atau nomor HP…"
+              aria-label="Cari pesanan"
+              className={`${FIELD} w-full sm:w-64`}
+            />
+            <select name="status" defaultValue={status} aria-label="Filter status" className={FIELD}>
+              <option value="semua">Semua status</option>
+              {ORDER_STATUSES.map((entry) => (
+                <option key={entry.value} value={entry.value}>
+                  {entry.label}
+                </option>
+              ))}
+            </select>
+            <button
+              type="submit"
+              className="blue-grad inline-flex min-h-11 cursor-pointer items-center rounded-pill px-5 text-sm font-bold text-white"
+            >
+              Cari
+            </button>
+          </form>
+        }
+      />
 
       {/* -------------------------------- Table -------------------------------- */}
       {orders.length === 0 ? (
@@ -100,7 +98,7 @@ export default async function AdminPesananPage({ searchParams }: PageProps<"/adm
                       </span>
                     </td>
                     <td className="px-5 py-3.5 text-xs text-muted">{order.method}</td>
-                    <td className="px-5 py-3.5 text-right font-bold whitespace-nowrap text-brand">
+                    <td className="px-5 py-3.5 text-right font-bold whitespace-nowrap text-brand tabular-nums">
                       {formatRupiah(order.total)}
                     </td>
                     <td className="px-5 py-3.5">
@@ -117,22 +115,11 @@ export default async function AdminPesananPage({ searchParams }: PageProps<"/adm
                       {formatDateTime(new Date(order.createdAt).getTime())}
                     </td>
                     <td className="px-5 py-3.5">
-                      <div className="flex justify-end gap-2">
-                        {ORDER_STATUSES.filter((entry) => entry.value !== order.status).map(
-                          (entry) => (
-                            <form key={entry.value} action={updateOrderStatusAction}>
-                              <input type="hidden" name="id" value={order.id} />
-                              <input type="hidden" name="status" value={entry.value} />
-                              <button
-                                type="submit"
-                                className="min-h-9 rounded-pill border border-line px-3 text-xs font-semibold whitespace-nowrap text-muted transition-colors hover:border-brand hover:text-brand"
-                              >
-                                {entry.value === "berhasil" ? "Tandai berhasil" : entry.value === "gagal" ? "Tandai gagal" : "Kembali menunggu"}
-                              </button>
-                            </form>
-                          ),
-                        )}
-                      </div>
+                      <OrderStatusButtons
+                        id={order.id}
+                        reference={order.reference}
+                        status={order.status}
+                      />
                     </td>
                   </tr>
                 ))}

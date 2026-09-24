@@ -201,17 +201,33 @@ export async function saveCatalogueAction(
   }
 }
 
-/** Moves an order to another status from the order list. */
-export async function updateOrderStatusAction(formData: FormData): Promise<void> {
+/**
+ * Moves one order to a new status.
+ *
+ * Called from a client component so the panel can report the outcome, which is
+ * why it returns a result instead of being a plain form action.
+ */
+export async function updateOrderStatusAction(
+  id: string,
+  status: string,
+): Promise<{ ok: boolean; message?: string }> {
   await requireAdmin();
 
-  const id = String(formData.get("id") ?? "");
-  const status = String(formData.get("status") ?? "");
-  if (!id || !ORDER_STATUSES.some((entry) => entry.value === status)) return;
+  if (!id || !ORDER_STATUSES.some((entry) => entry.value === status)) {
+    return { ok: false, message: "Status tidak dikenali." };
+  }
 
-  const supabase = createAdminClient();
-  await supabase.from("orders").update({ status }).eq("id", id);
-  revalidatePath("/admin/pesanan");
+  try {
+    const supabase = createAdminClient();
+    const { error } = await supabase.from("orders").update({ status }).eq("id", id);
+    if (error) return { ok: false, message: error.message };
+
+    revalidatePath("/admin/pesanan");
+    revalidatePath("/admin");
+    return { ok: true };
+  } catch (error) {
+    return { ok: false, message: error instanceof Error ? error.message : "Gagal menyimpan." };
+  }
 }
 
 /** Asks Cloudinary for the signature one image upload needs. */

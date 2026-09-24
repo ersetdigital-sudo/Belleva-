@@ -1,20 +1,21 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 import { savePaymentSettingsAction } from "@/lib/admin/actions";
-import { cn } from "@/lib/cn";
 import type { PaymentChannelSetting, PaymentMethodSetting } from "@/lib/settings";
 
 import { ImageUploadField } from "./ImageUploadField";
-
-const FIELD =
-  "w-full rounded-xl border border-line px-3.5 py-2.5 text-sm font-semibold outline-none transition focus:border-brand";
+import { useToast } from "./Toast";
+import { SaveBar, SectionCard, TextArea, TextInput } from "./ui";
 
 export function PaymentSettingsForm({ initial }: { initial: PaymentMethodSetting[] }) {
+  const toast = useToast();
   const [methods, setMethods] = useState(initial);
   const [busy, setBusy] = useState(false);
-  const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null);
+
+  const saved = useMemo(() => JSON.stringify(initial), [initial]);
+  const dirty = JSON.stringify(methods) !== saved;
 
   function patchMethod(index: number, next: Partial<PaymentMethodSetting>) {
     setMethods((prev) => prev.map((entry, i) => (i === index ? { ...entry, ...next } : entry)));
@@ -41,62 +42,60 @@ export function PaymentSettingsForm({ initial }: { initial: PaymentMethodSetting
 
   async function save() {
     setBusy(true);
-    setMessage(null);
     const result = await savePaymentSettingsAction(methods);
     setBusy(false);
-    setMessage(
-      result.ok
-        ? { ok: true, text: "Tersimpan. Situs sudah memakai nilai baru." }
-        : { ok: false, text: result.message ?? "Gagal menyimpan." },
-    );
+
+    if (!result.ok) {
+      toast.error("Gagal menyimpan pembayaran", {
+        description: result.message ?? "Coba lagi sebentar lagi.",
+      });
+      return;
+    }
+    toast.success("Pengaturan pembayaran tersimpan", {
+      description: "Halaman pembayaran langsung memakai nama, langkah, dan nomor yang baru.",
+    });
   }
 
   return (
     <div className="space-y-5">
       {methods.map((method, methodIndex) => (
-        <section key={method.slug} className="card p-5">
-          <div className="flex flex-wrap items-center gap-2">
-            <h3 className="font-bold">{method.name}</h3>
+        <SectionCard
+          key={method.slug}
+          title={method.name}
+          description={method.description || undefined}
+          aside={
             <span className="rounded-pill bg-soft px-2.5 py-1 font-mono text-[11px] text-muted">
               {method.slug}
             </span>
+          }
+        >
+          <div className="grid gap-4 sm:grid-cols-2">
+            <TextInput
+              label="Nama tampil"
+              value={method.name}
+              onChange={(event) => patchMethod(methodIndex, { name: event.target.value })}
+            />
+            <TextInput
+              label="Keterangan singkat"
+              value={method.description}
+              hint="Baris kecil di bawah nama, tampil di daftar metode bayar."
+              onChange={(event) => patchMethod(methodIndex, { description: event.target.value })}
+            />
           </div>
 
-          <div className="mt-4 grid gap-4 sm:grid-cols-2">
-            <label className="block">
-              <span className="text-xs font-semibold text-muted">Nama tampil</span>
-              <input
-                value={method.name}
-                onChange={(event) => patchMethod(methodIndex, { name: event.target.value })}
-                className={cn(FIELD, "mt-1.5")}
-              />
-            </label>
-            <label className="block">
-              <span className="text-xs font-semibold text-muted">Keterangan singkat</span>
-              <input
-                value={method.description}
-                onChange={(event) => patchMethod(methodIndex, { description: event.target.value })}
-                className={cn(FIELD, "mt-1.5")}
-              />
-            </label>
-          </div>
-
-          <label className="mt-4 block">
-            <span className="text-xs font-semibold text-muted">
-              Langkah pembayaran — satu langkah per baris. Pakai {"{channel}"} untuk nama
-              bank/e-wallet yang dipilih.
-            </span>
-            <textarea
+          <div className="mt-4">
+            <TextArea
+              label="Langkah pembayaran"
+              hint="Satu langkah per baris. Pakai {channel} untuk nama bank atau e-wallet yang dipilih pembeli."
               value={method.instructions.join("\n")}
+              rows={Math.max(3, method.instructions.length)}
               onChange={(event) =>
                 patchMethod(methodIndex, {
                   instructions: event.target.value.split("\n").filter((line) => line.trim()),
                 })
               }
-              rows={Math.max(3, method.instructions.length)}
-              className={cn(FIELD, "mt-1.5 leading-relaxed")}
             />
-          </label>
+          </div>
 
           {method.slug === "qris" && (
             <div className="mt-5 border-t border-line-2 pt-5">
@@ -115,100 +114,92 @@ export function PaymentSettingsForm({ initial }: { initial: PaymentMethodSetting
 
           {method.channels.length > 0 && (
             <div className="mt-5 border-t border-line-2 pt-5">
-              <p className="text-xs font-semibold text-muted">
+              <p className="text-sm font-bold">
+                {method.slug === "transfer" ? "Rekening tujuan" : "Kode pembayaran per channel"}
+              </p>
+              <p className="mt-1 text-xs text-muted">
                 {method.slug === "transfer"
-                  ? "Nomor rekening tujuan"
-                  : "Kode pembayaran tiap channel"}
+                  ? "Nomor dan atas nama ini yang ditampilkan ke pembeli setelah memilih banknya."
+                  : "Prefix dan panjang kode dipakai untuk membuat kode bayar yang harus ditransfer persis."}
               </p>
 
-              <div className="mt-3 space-y-3">
+              <div className="mt-4 space-y-4">
                 {method.channels.map((channel, channelIndex) => (
-                  <div
-                    key={channel.slug}
-                    className="grid gap-2 sm:grid-cols-[minmax(0,120px)_minmax(0,1fr)_minmax(0,1fr)]"
-                  >
-                    <input
-                      value={channel.label}
-                      placeholder="Nama"
-                      onChange={(event) =>
-                        patchChannel(methodIndex, channelIndex, { label: event.target.value })
-                      }
-                      className={FIELD}
-                    />
-                    {method.slug === "transfer" ? (
-                      <>
-                        <input
-                          value={channel.accountNo ?? ""}
-                          placeholder="Nomor rekening"
-                          onChange={(event) =>
-                            patchChannel(methodIndex, channelIndex, {
-                              accountNo: event.target.value,
-                            })
-                          }
-                          className={cn(FIELD, "font-mono")}
-                        />
-                        <input
-                          value={channel.accountName ?? ""}
-                          placeholder="Atas nama"
-                          onChange={(event) =>
-                            patchChannel(methodIndex, channelIndex, {
-                              accountName: event.target.value,
-                            })
-                          }
-                          className={FIELD}
-                        />
-                      </>
-                    ) : (
-                      <>
-                        <input
-                          value={channel.codePrefix ?? ""}
-                          placeholder="Prefix kode"
-                          onChange={(event) =>
-                            patchChannel(methodIndex, channelIndex, {
-                              codePrefix: event.target.value,
-                            })
-                          }
-                          className={cn(FIELD, "font-mono")}
-                        />
-                        <input
-                          value={channel.codeLength ?? ""}
-                          placeholder="Panjang kode"
-                          inputMode="numeric"
-                          onChange={(event) =>
-                            patchChannel(methodIndex, channelIndex, {
-                              codeLength: Number(event.target.value) || undefined,
-                            })
-                          }
-                          className={cn(FIELD, "font-mono")}
-                        />
-                      </>
-                    )}
+                  <div key={channel.slug} className="rounded-2xl border border-line p-4">
+                    <p className="text-xs font-bold text-muted">
+                      {method.slug === "transfer" ? "Bank" : "Channel"} · {channel.slug}
+                    </p>
+                    <div className="mt-3 grid gap-3 sm:grid-cols-3">
+                      <TextInput
+                        label="Nama"
+                        value={channel.label}
+                        onChange={(event) =>
+                          patchChannel(methodIndex, channelIndex, { label: event.target.value })
+                        }
+                      />
+                      {method.slug === "transfer" ? (
+                        <>
+                          <TextInput
+                            label="Nomor rekening"
+                            value={channel.accountNo ?? ""}
+                            className="font-mono"
+                            onChange={(event) =>
+                              patchChannel(methodIndex, channelIndex, {
+                                accountNo: event.target.value,
+                              })
+                            }
+                          />
+                          <TextInput
+                            label="Atas nama"
+                            value={channel.accountName ?? ""}
+                            onChange={(event) =>
+                              patchChannel(methodIndex, channelIndex, {
+                                accountName: event.target.value,
+                              })
+                            }
+                          />
+                        </>
+                      ) : (
+                        <>
+                          <TextInput
+                            label="Prefix kode"
+                            value={channel.codePrefix ?? ""}
+                            className="font-mono"
+                            onChange={(event) =>
+                              patchChannel(methodIndex, channelIndex, {
+                                codePrefix: event.target.value,
+                              })
+                            }
+                          />
+                          <TextInput
+                            label="Panjang kode"
+                            inputMode="numeric"
+                            value={channel.codeLength ?? ""}
+                            className="font-mono"
+                            onChange={(event) =>
+                              patchChannel(methodIndex, channelIndex, {
+                                codeLength: Number(event.target.value) || undefined,
+                              })
+                            }
+                          />
+                        </>
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>
             </div>
           )}
-        </section>
+        </SectionCard>
       ))}
 
-      <div className="sticky bottom-4 flex flex-wrap items-center gap-3 rounded-2xl border border-line bg-white/95 p-4 backdrop-blur">
-        <button
-          type="button"
-          onClick={save}
-          disabled={busy}
-          className="blue-grad inline-flex min-h-11 items-center rounded-pill px-6 text-sm font-bold text-white disabled:opacity-70"
-        >
-          {busy ? "Menyimpan…" : "Simpan pengaturan"}
-        </button>
-        {message && (
-          <p
-            role="status"
-            className={cn("text-sm font-semibold", message.ok ? "text-success" : "text-danger")}
-          >
-            {message.text}
-          </p>
-        )}
-      </div>
+      <SaveBar
+        dirty={dirty}
+        busy={busy}
+        onSave={() => void save()}
+        onReset={() => setMethods(initial)}
+        label="Simpan pengaturan"
+      />
     </div>
   );
 }

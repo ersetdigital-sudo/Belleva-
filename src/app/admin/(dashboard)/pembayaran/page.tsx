@@ -1,4 +1,5 @@
 import { PaymentSettingsForm } from "@/components/admin/PaymentSettingsForm";
+import { PageHeader } from "@/components/admin/ui";
 import { getPaymentSettings } from "@/lib/settings";
 
 export default async function AdminPembayaranPage() {
@@ -6,11 +7,10 @@ export default async function AdminPembayaranPage() {
 
   return (
     <div>
-      <h2 className="h-display text-xl font-extrabold">Pembayaran</h2>
-      <p className="mt-1.5 text-sm text-muted">
-        Metode bayar, langkah pembayarannya, nomor rekening, dan gambar QRIS. Yang kosong di sini
-        berarti situs masih memakai nilai bawaan.
-      </p>
+      <PageHeader
+        title="Pembayaran"
+        description="Metode bayar, langkah pembayarannya, nomor rekening, dan gambar QRIS. Yang kosong di sini berarti situs masih memakai nilai bawaan."
+      />
 
       <div className="mt-6">
         <PaymentSettingsForm initial={settings} />

@@ -14,6 +14,23 @@ export function digitsOnly(value: string): string {
   return value.replace(/\D/g, "");
 }
 
+/** "1.234.567" -> 1234567. Non-digits are ignored, so typing the dots is safe. */
+export function parseRupiah(value: string): number {
+  return Number(digitsOnly(value)) || 0;
+}
+
+/**
+ * 1234567 -> "1.234.567", for money fields that group digits while being typed.
+ *
+ * Hand-rolled for the same reason as `formatRupiah`: `toLocaleString` depends on
+ * ICU data that can differ between the Node build and the visitor's browser.
+ */
+export function formatThousands(value: number | string): string {
+  const digits = digitsOnly(String(value));
+  if (!digits) return "";
+  return digits.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+}
+
 /**
  * Collapses the ways one number gets written into a single form: "0812…",
  * "812…", "+62 812…" and "62812…" all become "812…".
