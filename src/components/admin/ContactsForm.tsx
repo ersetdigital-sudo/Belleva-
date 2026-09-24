@@ -8,56 +8,23 @@ import type { SiteContacts } from "@/lib/settings";
 import { useToast } from "./Toast";
 import { SaveBar, SectionCard, TextInput } from "./ui";
 
-const FIELDS: {
-  key: keyof SiteContacts;
-  label: string;
-  hint?: string;
-  placeholder?: string;
-  group: "kontak" | "tautan";
-}[] = [
+/**
+ * The page links (help centre, legal documents, catalogue) used to be editable
+ * here too. They are real routes now, so there is nothing left to configure —
+ * only the two channels a customer can actually reach a person through.
+ */
+const FIELDS: { key: keyof SiteContacts; label: string; hint?: string; placeholder?: string }[] = [
   {
     key: "whatsapp",
     label: "Nomor WhatsApp",
-    hint: "Format internasional tanpa tanda +. Kosongkan untuk menyembunyikan tombol WhatsApp di seluruh situs.",
+    hint: "Format internasional tanpa tanda +. Kosongkan untuk menyembunyikan tombol WhatsApp di seluruh situs, termasuk halaman Hubungi Kami.",
     placeholder: "6281234567890",
-    group: "kontak",
   },
   {
     key: "email",
     label: "Email",
     hint: "Kosongkan untuk menyembunyikan tombol Email. Dipakai sebagai tautan mailto.",
     placeholder: "hello@belleva.net",
-    group: "kontak",
-  },
-  {
-    key: "helpCenter",
-    label: "Tautan Pusat Bantuan",
-    placeholder: "/pusat-bantuan",
-    group: "tautan",
-  },
-  {
-    key: "contact",
-    label: "Tautan Hubungi Kami",
-    hint: "Masih kosong — isi kalau halaman kontaknya sudah ada.",
-    group: "tautan",
-  },
-  {
-    key: "terms",
-    label: "Tautan Syarat & Ketentuan",
-    placeholder: "/syarat-ketentuan",
-    group: "tautan",
-  },
-  {
-    key: "privacy",
-    label: "Tautan Kebijakan Privasi",
-    placeholder: "/kebijakan-privasi",
-    group: "tautan",
-  },
-  {
-    key: "allProducts",
-    label: "Tautan “Lihat Semua Produk”",
-    hint: "Tombol di section produk pada beranda.",
-    group: "tautan",
   },
 ];
 
@@ -89,30 +56,10 @@ export function ContactsForm({ initial }: { initial: SiteContacts }) {
     <div className="space-y-5">
       <SectionCard
         title="Kontak yang bisa dihubungi"
-        description="Dikosongkan berarti tombolnya tidak dirender sama sekali — bukan tombol yang tidak ke mana-mana."
+        description="Yang diisi di sini muncul sebagai tombol di halaman Hubungi Kami dan di footer. Dikosongkan berarti tombolnya tidak dirender sama sekali."
       >
         <div className="space-y-4">
-          {FIELDS.filter((field) => field.group === "kontak").map((field) => (
-            <TextInput
-              key={field.key}
-              label={field.label}
-              hint={field.hint}
-              placeholder={field.placeholder}
-              value={values[field.key]}
-              onChange={(event) =>
-                setValues((prev) => ({ ...prev, [field.key]: event.target.value }))
-              }
-            />
-          ))}
-        </div>
-      </SectionCard>
-
-      <SectionCard
-        title="Tautan halaman"
-        description="Alamat yang dipakai footer, dropdown Bantuan, dan tombol di beranda."
-      >
-        <div className="grid gap-4 sm:grid-cols-2">
-          {FIELDS.filter((field) => field.group === "tautan").map((field) => (
+          {FIELDS.map((field) => (
             <TextInput
               key={field.key}
               label={field.label}
