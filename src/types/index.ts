@@ -264,3 +264,20 @@ export interface HelpArticle {
   question: string;
   answer: string;
 }
+
+/** One numbered section of a legal document. */
+export interface LegalSection {
+  id: string;
+  heading: string;
+  paragraphs?: string[];
+  bullets?: string[];
+}
+
+export interface LegalDocument {
+  slug: string;
+  title: string;
+  summary: string;
+  /** Human-readable "last updated" line, kept as text so it never drifts. */
+  updated: string;
+  sections: LegalSection[];
+}

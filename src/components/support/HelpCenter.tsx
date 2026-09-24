@@ -6,9 +6,9 @@ import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 
 import { helpArticles, helpTopics } from "@/data/help";
 import { cn } from "@/lib/cn";
-import { externalLinks } from "@/lib/site";
 import type { HelpTopicId } from "@/types";
 
+import { ContactLinks } from "@/components/support/ContactLinks";
 import { PlusIcon, SearchIcon } from "@/components/icons";
 
 type TopicFilter = HelpTopicId | "semua";
@@ -213,22 +213,7 @@ export function HelpCenter() {
             >
               Pertanyaan Umum
             </Link>
-            {externalLinks.whatsapp && (
-              <a
-                href={`https://wa.me/${externalLinks.whatsapp}`}
-                className="inline-flex min-h-11 items-center rounded-pill border border-white/40 px-6 text-sm font-semibold text-white transition-colors hover:bg-white/15"
-              >
-                WhatsApp
-              </a>
-            )}
-            {externalLinks.email && (
-              <a
-                href={`mailto:${externalLinks.email}`}
-                className="inline-flex min-h-11 items-center rounded-pill border border-white/40 px-6 text-sm font-semibold text-white transition-colors hover:bg-white/15"
-              >
-                Email
-              </a>
-            )}
+            <ContactLinks />
           </div>
         </section>
       </div>

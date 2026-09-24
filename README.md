@@ -153,6 +153,16 @@ Halaman bantuan yang dibuka dari tombol **Bantuan** di header (desktop) dan kolo
 - **Tombol kontak muncul kondisional.** WhatsApp dan Email hanya dirender kalau `externalLinks.whatsapp` / `.email` diisi di `src/lib/site.ts`. Selama kosong, tombolnya tidak ada — daripada menampilkan tombol yang tidak ke mana-mana.
 - Halamannya **indexable** (beda dengan `/bayar` dan `/cek-transaksi` yang `noindex`) dan sudah terdaftar di `src/app/sitemap.ts`.
 
+## Halaman legal (/syarat-ketentuan, /kebijakan-privasi)
+
+Dua dokumen legal yang sebelumnya masih `"#"` di `externalLinks`, sekarang route sungguhan dan terhubung dari dropdown Bantuan di header maupun kolom Bantuan di footer.
+
+- Isinya di `src/data/legal.ts` (12 bagian per dokumen), dirender oleh satu komponen `LegalDocumentView` yang sama: header brand ringkas, daftar isi sticky di desktop, dan paragraf dengan lebar baca yang enak.
+- Ditulis dari perilaku aplikasi yang sebenarnya — biaya layanan Rp 1.000, batas bayar 24 jam, riwayat transaksi yang tersimpan di browser, dan pihak ketiga yang benar-benar dipakai (operator/penyedia tagihan, penyedia pembayaran, infrastruktur).
+- Daftar isinya pakai `useActiveHeading` (`src/lib/use-active-heading.ts`), bukan `useActiveSection` yang dipakai header. Alasannya: `useActiveSection` mengambil section **paling atas** yang berpotongan — pas untuk section landing yang berjarak jauh, tapi meleset di dokumen yang heading-nya rapat. Garis bacanya di 200px karena anchor di situs ini mendarat di 192px (`scroll-padding-top` 80px dari `globals.css` + `scroll-mt-28` 112px).
+
+**TODO(legal): kedua dokumen ini belum ditinjau penasihat hukum.** Kalimatnya ditulis supaya aman dan sesuai perilaku aplikasi, tapi klausul soal pembatalan/pengembalian dana, retensi data, dan yurisdiksi tetap harus diperiksa sebelum diandalkan.
+
 ## Cara maintain
 
 - **Nambah operator / denominasi / paket data** → edit `src/data/products.ts` (termasuk `operatorPrefixes` buat deteksi).
@@ -165,7 +175,7 @@ Halaman bantuan yang dibuka dari tombol **Bantuan** di header (desktop) dan kolo
 
 Lihat `src/lib/site.ts` → `externalLinks`. Semua nilai di sana masih `"#"` seperti di HTML asli:
 
-`signUp` (tujuan tombol CTA di section Daftar), `allProducts`, `contact`, `terms`, `privacy`, `whatsapp`, `email`.
+`signUp` (tujuan tombol CTA di section Daftar), `allProducts`, `contact`, `whatsapp`, `email`.
 
 Selain itu:
 

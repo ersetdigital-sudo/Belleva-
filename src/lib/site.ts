@@ -29,9 +29,11 @@ export const externalLinks = {
   allProducts: "#",
   /** The help centre is a real route, so this one is wired up. */
   helpCenter: "/pusat-bantuan",
+  /** Route the contact page will live at, once the channel exists. */
   contact: "#",
-  terms: "#",
-  privacy: "#",
+  /** Both legal documents are real routes. */
+  terms: "/syarat-ketentuan",
+  privacy: "/kebijakan-privasi",
   /** e.g. "6281234567890" — leave empty to hide WhatsApp CTAs. */
   whatsapp: "",
   /** e.g. "hello@belleva.net" */
