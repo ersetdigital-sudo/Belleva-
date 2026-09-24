@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { inquireBill } from "@/lib/billing";
 import { resolvePostpaid, resolvePrepaid } from "@/lib/catalog";
 import { createAdminClient } from "@/lib/admin/supabase";
+import { lookupOrders, type LookupScope, type Order } from "@/lib/orders";
 import { getCatalogue } from "@/lib/products";
 import { siteConfig } from "@/lib/site";
 
@@ -79,6 +80,24 @@ export async function recordOrderAction(input: {
   } catch {
     return { ok: false };
   }
+}
+
+/**
+ * The public lookup behind /cek-transaksi.
+ *
+ * Runs on the server so a customer can check an order from any device, not just
+ * the browser that placed it. The query is only shape-checked here; matching and
+ * the limits live in `lookupOrders`.
+ */
+export async function lookupOrdersAction(
+  query: string,
+): Promise<{ ok: boolean; orders: Order[]; scope: LookupScope }> {
+  if (typeof query !== "string" || query.length > 60) {
+    return { ok: false, orders: [], scope: "none" };
+  }
+
+  const { orders, scope } = await lookupOrders(query);
+  return { ok: true, orders, scope };
 }
 
 /** Marks the order the customer just confirmed as settled. */

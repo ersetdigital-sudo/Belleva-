@@ -1,7 +1,6 @@
 import { updateOrderStatusAction } from "@/lib/admin/actions";
-import { formatRupiah } from "@/lib/format";
+import { formatDateTime, formatRupiah } from "@/lib/format";
 import { ORDER_STATUSES, getOrders } from "@/lib/orders";
-import { formatTransactionDate } from "@/lib/transactions";
 
 const STATUS_STYLE: Record<string, string> = {
   menunggu: "bg-warn/15 text-warn",
@@ -115,7 +114,7 @@ export default async function AdminPesananPage({ searchParams }: PageProps<"/adm
                       </span>
                     </td>
                     <td className="px-5 py-3.5 text-xs whitespace-nowrap text-muted">
-                      {formatTransactionDate(new Date(order.createdAt).getTime())}
+                      {formatDateTime(new Date(order.createdAt).getTime())}
                     </td>
                     <td className="px-5 py-3.5">
                       <div className="flex justify-end gap-2">

@@ -13,7 +13,6 @@ import { optimisedUrl } from "@/lib/cloudinary-url";
 import { cn } from "@/lib/cn";
 import { formatRupiah } from "@/lib/format";
 import { siteConfig } from "@/lib/site";
-import { saveTransaction } from "@/lib/transactions";
 import type {
   PaymentChannel,
   PaymentMethod,
@@ -210,24 +209,15 @@ export function PaymentFlow({
   const total = order?.kind === "prepaid" ? price + siteConfig.serviceFee : (bill?.total ?? 0);
 
   /**
-   * Mirror the order into this browser's history as soon as it is created, then
-   * again when it settles, and record it on the server so the merchant can
-   * actually see and manage it in /admin/pesanan. The server action re-resolves
-   * the price from the catalogue, so nothing here is trusted with an amount.
+   * Records the order on the server as soon as it is created, and marks it
+   * settled once the customer confirms. `/cek-transaksi` and /admin/pesanan
+   * read the same rows, so the history follows the customer instead of the
+   * browser. The price is re-resolved server-side, so nothing here is trusted
+   * with an amount.
    */
   useEffect(() => {
     if (!order) return;
     if (status !== "awaiting" && status !== "done") return;
-
-    saveTransaction({
-      reference,
-      customer,
-      productName: order.name,
-      groupLabel: order.group.label,
-      method: paymentLabel,
-      total,
-      status: status === "done" ? "berhasil" : "menunggu",
-    });
 
     if (status === "done") {
       void settleOrderAction(reference);
