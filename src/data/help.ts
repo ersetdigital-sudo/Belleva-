@@ -7,7 +7,7 @@ import { faqItems } from "./faq";
  *
  * Every answer here describes what the app actually does — the buy flow, the
  * 24-hour payment window, the flat service fee, operator detection, the 20-digit
- * stroom code, the local-only transaction history. The "Umum" section reuses the
+ * stroom code, the server-side transaction history. The "Umum" section reuses the
  * landing page's `faqItems` so the two surfaces cannot say different things.
  *
  * TODO(content): these are the questions the product itself answers. Add the
@@ -114,7 +114,7 @@ export const helpArticles: HelpArticle[] = [
     topic: "kendala",
     question: "Kenapa riwayat transaksi saya tidak muncul?",
     answer:
-      "Riwayat hanya tersimpan di perangkat yang dipakai bertransaksi, bukan di server. Jadi transaksi dari HP atau browser lain tidak akan muncul di perangkat ini. Maksimal 20 transaksi terakhir yang disimpan.",
+      "Riwayat transaksi tersimpan di server kami, bukan di perangkatmu, jadi transaksi yang dibuat dari HP tetap bisa dibuka dari laptop. Masukkan nomor referensinya, atau nomor tujuan yang kamu pakai saat bertransaksi.",
   },
   {
     id: "sudah-bayar-belum-berubah",

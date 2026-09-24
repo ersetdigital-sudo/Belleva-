@@ -112,19 +112,28 @@ Tiga hal di wireframe yang tidak bisa ditiru apa adanya karena asetnya belum ada
 
 Tab **Transaksi** di bottom nav mobile dan link di footer desktop menuju halaman ini.
 
-Halaman ini **mencari di riwayat yang tersimpan di browser pengunjung**, bukan di
-server — checkout Belleva masih simulasi dan tidak punya backend transaksi, jadi
-mencari ke server memang tidak mungkin. Supaya tetap jujur:
+Pencariannya jalan **di server**, ke tabel `orders` yang sama dengan yang dikelola di
+`/admin/pesanan` — jadi riwayatnya ikut orangnya, bukan ikut browsernya:
 
-- Setiap pesanan dicatat ke `localStorage` (`src/lib/transactions.ts`) begitu
-  checkout masuk tahap menunggu pembayaran, lalu statusnya di-update jadi
-  `berhasil` saat selesai. Maksimal 20 transaksi terakhir per perangkat.
-- Store-nya dibaca React lewat `useSyncExternalStore`, jadi tidak ada state yang
-  disalin di `useEffect` dan SSR tetap konsisten.
-- Pencarian cocok dengan nomor tujuan **atau** nomor referensi. Nomor dinormalisasi
-  dulu, jadi `0812…`, `812…`, dan `+62 812…` menemukan transaksi yang sama.
-- Kalau tidak ketemu, halamannya menjelaskan bahwa riwayat hanya ada di perangkat
-  yang dipakai bertransaksi — bukan pura-pura sedang mencari di server.
+- Checkout mencatat pesanannya ke `orders` lewat `recordOrderAction`, dan
+  `settleOrderAction` menandainya berhasil saat pelanggan menekan konfirmasi.
+  Harga dihitung ulang di server dari katalog, jadi yang tersimpan bukan angka
+  kiriman browser.
+- `lookupOrders` (`src/lib/orders.ts`) menerima **kode referensi** atau **nomor HP**.
+  Kode referensi dibuat per percobaan bayar, jadi memegang kodenya sudah jadi bukti
+  pemilik. Nomor HP bukan bukti apa pun, jadi pencarian nomor mensyaratkan nomor
+  lengkap (minimal 8 digit) dan dibatasi 10 hasil terbaru.
+- Nomor dinormalisasi dulu lewat `normalizePhone`, jadi `0812…`, `812…`, dan
+  `+62 812…` menemukan pesanan yang sama — termasuk pesanan yang tersimpan dalam
+  format berbeda.
+- Wildcard `%` dan `_` dibuang sebelum dipakai. Tanpa itu, `%` sendirian akan
+  mencocokkan semua baris dan membocorkan pesanan orang lain.
+- Pencariannya dijalankan saat tombol **Cek** ditekan, bukan tiap ketikan, karena
+  ini sudah berupa permintaan ke server.
+- Tidak ada lagi store `localStorage` — `src/lib/transactions.ts` dihapus, begitu
+  juga salinan lokal saat checkout. Cek Transaksi dan panel admin membaca sumber
+  yang sama. `formatTransactionDate` dipindah ke `lib/format` sebagai
+  `formatDateTime` karena dipakai dua halaman.
 
 Tab-nya berlabel **"Transaksi"**, bukan "Cek Transaksi": lima tab di layar 360px
 hanya memberi 68px per tab sementara label panjangnya butuh ~71px, jadi labelnya

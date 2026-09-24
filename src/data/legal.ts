@@ -4,7 +4,7 @@ import type { LegalDocument } from "@/types";
  * Isi halaman Syarat & Ketentuan dan Kebijakan Privasi.
  *
  * Ditulis dari perilaku aplikasi yang sebenarnya — biaya layanan, batas bayar
- * 24 jam, riwayat transaksi yang tersimpan di perangkat, data yang dikirim ke
+ * 24 jam, riwayat transaksi yang tersimpan di server, data yang dikirim ke
  * Supabase dan Cloudinary. Yang belum bisa saya pastikan (kebijakan refund,
  * retensi data, yurisdiksi) ditulis sebagai kebijakan yang aman dan ditandai
  * TODO(content) di README supaya diperiksa sebelum dipakai.
@@ -152,11 +152,12 @@ export const privacyDocument: LegalDocument = {
       ],
     },
     {
-      id: "di-perangkat",
-      heading: "4. Riwayat yang tersimpan di perangkatmu",
+      id: "riwayat-server",
+      heading: "4. Riwayat transaksi di server kami",
       paragraphs: [
-        "Riwayat transaksi pada halaman Cek Transaksi disimpan di penyimpanan lokal browser kamu, di perangkat itu sendiri — bukan di server kami. Karena itu transaksi dari HP atau browser lain tidak akan muncul di perangkat ini, dan maksimal 20 transaksi terakhir yang tersimpan.",
-        "Kamu bisa menghapusnya sendiri kapan saja dengan membersihkan data situs di browser yang kamu pakai.",
+        "Saat kamu menyelesaikan checkout, rincian pesanannya kami simpan di server: nomor tujuan atau ID pelanggan, produk yang dibeli, metode pembayaran, jumlah tagihan, status, dan waktu transaksinya — termasuk nomor referensinya.",
+        "Penyimpanan ini yang membuat halaman Cek Transaksi bisa dipakai dari perangkat mana pun. Untuk membukanya, masukkan nomor referensi transaksimu atau nomor tujuan yang kamu pakai saat bertransaksi.",
+        "Data ini kami simpan selama diperlukan untuk menangani keluhan dan memenuhi kewajiban pencatatan, dan kamu bisa meminta penghapusannya lewat kanal bantuan kami.",
       ],
     },
     {
@@ -175,7 +176,8 @@ export const privacyDocument: LegalDocument = {
       id: "cookie",
       heading: "6. Cookie dan penyimpanan lokal",
       paragraphs: [
-        "Kami memakai penyimpanan lokal browser untuk mengingat riwayat transaksi di perangkatmu. Kami tidak memakai cookie untuk periklanan, dan tidak melacak aktivitasmu di situs lain.",
+        "Kami tidak memakai cookie untuk periklanan, dan tidak melacak aktivitasmu di situs lain.",
+        "Satu cookie dipakai untuk sesi masuk panel admin, dan itu hanya untuk pengelola situs. Riwayat transaksi tidak disimpan di browser, melainkan di server seperti dijelaskan di bagian 4.",
       ],
     },
     {
