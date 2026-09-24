@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { redirect } from "next/navigation";
 
+import { AdminNav, AdminTopbar } from "@/components/admin/AdminChrome";
+import { Logo } from "@/components/layout/Logo";
 import { logoutAction } from "@/lib/admin/actions";
 import { isSignedIn } from "@/lib/admin/session";
 
@@ -10,62 +11,41 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-const ADMIN_NAV = [
-  { href: "/admin", label: "Ringkasan" },
-  { href: "/admin/pembayaran", label: "Pembayaran" },
-  { href: "/admin/kontak", label: "Kontak" },
-];
-
 /**
  * Shell for every signed-in admin page, and the guard for the whole group.
- * The login route sits outside this group, so it is never blocked by it.
+ *
+ * It carries its own chrome — a fixed sidebar and a sticky top bar — and the
+ * public site's header and footer are dropped on `/admin` by `SiteChrome`, so
+ * the panel never renders the marketing navigation. The login route sits
+ * outside this group, so it is never blocked by the guard.
  */
 export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
   if (!(await isSignedIn())) redirect("/admin/login");
 
   return (
-    <div className="mx-auto max-w-6xl px-5 py-10">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <p className="text-xs font-bold tracking-widest text-brand">PANEL ADMIN</p>
-          <h1 className="h-display mt-1 text-2xl font-extrabold">Belleva</h1>
+    <div className="lg:flex">
+      <aside className="border-b border-line bg-white lg:fixed lg:inset-y-0 lg:left-0 lg:w-64 lg:border-r lg:border-b-0">
+        <div className="flex h-16 items-center px-5 lg:border-b lg:border-line">
+          <Logo priority />
         </div>
 
-        <div className="flex items-center gap-2">
-          <Link
-            href="/"
-            className="inline-flex min-h-10 items-center rounded-pill border border-line px-4 text-sm font-semibold transition hover:border-brand hover:text-brand"
-          >
-            Lihat situs
-          </Link>
+        <AdminNav />
+
+        <div className="border-t border-line p-3 lg:absolute lg:inset-x-0 lg:bottom-0 lg:p-4">
           <form action={logoutAction}>
             <button
               type="submit"
-              className="inline-flex min-h-10 items-center rounded-pill border border-line px-4 text-sm font-semibold text-muted transition hover:border-danger hover:text-danger"
+              className="inline-flex min-h-10 items-center rounded-xl px-3.5 text-sm font-semibold text-muted transition-colors hover:bg-danger-soft hover:text-danger"
             >
               Keluar
             </button>
           </form>
         </div>
-      </div>
+      </aside>
 
-      <div className="mt-8 lg:grid lg:grid-cols-[minmax(0,200px)_minmax(0,1fr)] lg:items-start lg:gap-10">
-        <nav aria-label="Navigasi admin" className="mb-6 lg:mb-0">
-          <ul className="no-scrollbar flex gap-2 overflow-x-auto pb-1 lg:flex-col lg:gap-1 lg:overflow-visible">
-            {ADMIN_NAV.map((item) => (
-              <li key={item.href} className="shrink-0">
-                <Link
-                  href={item.href}
-                  className="block rounded-xl px-4 py-2.5 text-sm font-semibold whitespace-nowrap text-muted transition-colors hover:bg-soft hover:text-brand"
-                >
-                  {item.label}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </nav>
-
-        <div className="min-w-0">{children}</div>
+      <div className="min-w-0 flex-1 lg:pl-64">
+        <AdminTopbar />
+        <div className="px-5 py-8">{children}</div>
       </div>
     </div>
   );
