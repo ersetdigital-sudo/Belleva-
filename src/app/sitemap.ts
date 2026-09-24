@@ -11,5 +11,11 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 1,
       images: [`${siteConfig.url}/images/og-belleva.png`],
     },
+    {
+      url: `${siteConfig.url}/pusat-bantuan`,
+      lastModified: new Date(),
+      changeFrequency: "monthly",
+      priority: 0.5,
+    },
   ];
 }

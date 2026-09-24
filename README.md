@@ -143,6 +143,16 @@ Picker operator di section produk menampilkan logo provider, bukan cuma nama.
   - `theree.png` sebenarnya brand "Three" versi luar negeri, bukan logo Tri Indonesia, dan bentuknya mark hitam monokrom.
   Kalau ada aset resmi dari halaman brand masing-masing operator, tinggal ganti filenya — nama dan path-nya tidak perlu diubah.
 
+## Pusat Bantuan (/pusat-bantuan)
+
+Halaman bantuan yang dibuka dari tombol **Bantuan** di header (desktop) dan kolom Bantuan di footer. `externalLinks.helpCenter` sekarang menunjuk ke route ini, bukan `"#"`.
+
+- **Search-first.** Kolom cari di hero menyaring seluruh artikel secara langsung, chip di bawahnya menyaring per topik, dan hasilnya tetap dikelompokkan per topik — jadi struktur bantuannya tetap kelihatan sambil difilter. Ada counter hasil dan empty state yang mengarahkan ke Cek Transaksi.
+- Isi artikelnya di `src/data/help.ts`, 15 artikel dalam 4 topik. Semuanya menjelaskan perilaku aplikasi yang sebenarnya: alur beli, batas pembayaran 24 jam, biaya layanan Rp 1.000, deteksi operator dari prefix, nomor stroom 20 digit, dan riwayat yang cuma tersimpan di perangkat.
+- Topik **Umum** memakai `faqItems` yang sama dengan section Pertanyaan Umum di beranda, jadi dua tempat itu tidak bisa berbeda isi.
+- **Tombol kontak muncul kondisional.** WhatsApp dan Email hanya dirender kalau `externalLinks.whatsapp` / `.email` diisi di `src/lib/site.ts`. Selama kosong, tombolnya tidak ada — daripada menampilkan tombol yang tidak ke mana-mana.
+- Halamannya **indexable** (beda dengan `/bayar` dan `/cek-transaksi` yang `noindex`) dan sudah terdaftar di `src/app/sitemap.ts`.
+
 ## Cara maintain
 
 - **Nambah operator / denominasi / paket data** → edit `src/data/products.ts` (termasuk `operatorPrefixes` buat deteksi).
@@ -155,7 +165,7 @@ Picker operator di section produk menampilkan logo provider, bukan cuma nama.
 
 Lihat `src/lib/site.ts` → `externalLinks`. Semua nilai di sana masih `"#"` seperti di HTML asli:
 
-`signUp` (tujuan tombol CTA di section Daftar), `allProducts`, `helpCenter`, `contact`, `terms`, `privacy`, `whatsapp`, `email`.
+`signUp` (tujuan tombol CTA di section Daftar), `allProducts`, `contact`, `terms`, `privacy`, `whatsapp`, `email`.
 
 Selain itu:
 

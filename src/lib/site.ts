@@ -27,7 +27,8 @@ export const externalLinks = {
   /** TODO(content): real registration destination for the CTA button. */
   signUp: "#",
   allProducts: "#",
-  helpCenter: "#",
+  /** The help centre is a real route, so this one is wired up. */
+  helpCenter: "/pusat-bantuan",
   contact: "#",
   terms: "#",
   privacy: "#",

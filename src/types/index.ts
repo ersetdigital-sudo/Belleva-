@@ -248,3 +248,19 @@ export interface MobileProduct {
   gradient: string;
   item: ProductItem;
 }
+
+/** Sections the Pusat Bantuan page groups its articles into. */
+export type HelpTopicId = "umum" | "pembayaran" | "produk" | "kendala";
+
+export interface HelpTopic {
+  id: HelpTopicId;
+  label: string;
+  description: string;
+}
+
+export interface HelpArticle {
+  id: string;
+  topic: HelpTopicId;
+  question: string;
+  answer: string;
+}
