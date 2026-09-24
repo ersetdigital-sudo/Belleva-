@@ -34,14 +34,20 @@ export function Header() {
         isAppHome && "hidden lg:block",
       )}
     >
-      <div className="mx-auto flex h-16 max-w-6xl items-center gap-8 px-5">
+      <div className="relative mx-auto flex h-16 max-w-6xl items-center gap-8 px-5">
         <Link href="/" className="block shrink-0" aria-label="Belleva — kembali ke beranda">
           <Logo priority />
         </Link>
 
+        {/*
+          Pinned to the centre of the bar rather than laid out after the logo, so
+          the menu sits on the true middle of the header whatever the logo and
+          the buttons happen to measure. Only rendered from `lg`, where there is
+          room for it to clear both sides.
+        */}
         <nav
           aria-label="Navigasi utama"
-          className="hidden items-center gap-7 text-sm font-medium text-muted lg:flex"
+          className="absolute inset-y-0 left-1/2 hidden -translate-x-1/2 items-center gap-7 text-sm font-medium text-muted lg:flex"
         >
           {navLinks.map((link) => {
             const isActive = activeSection === sectionIdOf(link.href);
