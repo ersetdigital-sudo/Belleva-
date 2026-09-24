@@ -1,26 +1,30 @@
 import Link from "next/link";
 
 import { getContacts, getPaymentSettings } from "@/lib/settings";
-import { getPriceOverrides } from "@/lib/products";
+import { getCatalogueOverrides } from "@/lib/products";
 
 export default async function AdminHomePage() {
-  const [payments, contacts, prices] = await Promise.all([
+  const [payments, contacts, catalogue] = await Promise.all([
     getPaymentSettings(),
     getContacts(),
-    getPriceOverrides(),
+    getCatalogueOverrides(),
   ]);
 
   const qris = payments.find((method) => method.slug === "qris");
   const banks = payments.find((method) => method.slug === "transfer")?.channels.length ?? 0;
-  const changedPrices = Object.keys(prices).length;
+  const changedPrices = Object.keys(catalogue.prices).length;
+  const addedItems = Object.values(catalogue.addedItems).flat().length;
 
   const cards = [
     {
       href: "/admin/produk",
-      title: "Harga produk",
-      body: `${changedPrices} harga di luar bawaan`,
-      status: changedPrices > 0 ? "Ada harga yang sudah diubah" : "Masih semua harga bawaan",
-      warn: changedPrices === 0,
+      title: "Produk & harga",
+      body: `${changedPrices} harga diubah · ${addedItems} produk tambahan`,
+      status:
+        changedPrices > 0 || addedItems > 0
+          ? "Ada yang sudah disesuaikan dari bawaan"
+          : "Masih semua harga bawaan",
+      warn: changedPrices === 0 && addedItems === 0,
     },
     {
       href: "/admin/pembayaran",

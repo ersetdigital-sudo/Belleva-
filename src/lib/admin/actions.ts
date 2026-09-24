@@ -6,7 +6,8 @@ import { redirect } from "next/navigation";
 
 import { destroyImage, createUploadSignature } from "./cloudinary";
 import { ORDER_STATUSES } from "@/lib/orders";
-import { defaultPrices, type PriceOverrides } from "@/lib/products";
+import { defaultPrices, type CatalogueOverrides, type PriceOverrides } from "@/lib/products";
+import type { ProductItem } from "@/types";
 import {
   SESSION_COOKIE,
   createSessionToken,
@@ -134,37 +135,67 @@ export async function saveContactsAction(
 }
 
 /**
- * Saves product prices.
+ * Saves the whole catalogue edit: prices, items added by hand, and shipped items
+ * removed.
  *
- * Only the rows that differ from the shipped defaults are stored, so the record
- * stays small and a price changed back in code still reaches the site. Prices
- * are validated as positive integers — the checkout charges whatever lands here.
+ * Only prices that differ from the shipped defaults are stored, so a price
+ * changed back in code still reaches the site. Added items are shape-checked and
+ * capped — the checkout charges whatever lands here, so nothing empty or
+ * negative gets through.
  */
-export async function saveProductPricesAction(
-  prices: PriceOverrides,
-): Promise<{ ok: boolean; message?: string; changed?: number }> {
+export async function saveCatalogueAction(
+  overrides: CatalogueOverrides,
+): Promise<{ ok: boolean; message?: string; changed?: number; added?: number; hidden?: number }> {
   await requireAdmin();
 
   try {
     const supabase = createAdminClient();
     const defaults = defaultPrices();
-    const changed: PriceOverrides = {};
+    const prices: PriceOverrides = {};
 
-    for (const [key, value] of Object.entries(prices)) {
+    for (const [key, value] of Object.entries(overrides.prices ?? {})) {
       if (typeof value !== "number" || !Number.isFinite(value)) continue;
       const price = Math.round(value);
       if (price <= 0) return { ok: false, message: "Harga harus lebih dari 0." };
-      if (price !== defaults[key]) changed[key] = price;
+      if (price !== defaults[key]) prices[key] = price;
     }
+
+    const addedItems: Record<string, ProductItem[]> = {};
+    for (const [bucket, items] of Object.entries(overrides.addedItems ?? {})) {
+      const clean = (items ?? [])
+        .filter((item) => item?.id && item.name?.trim() && Number.isFinite(item.price) && item.price > 0)
+        .slice(0, 60)
+        .map((item) => ({
+          id: String(item.id).slice(0, 40),
+          name: item.name.trim().slice(0, 60),
+          headline: item.headline?.trim().slice(0, 30) || undefined,
+          meta: item.meta?.trim().slice(0, 60) || undefined,
+          badge: item.badge?.trim().slice(0, 24) || undefined,
+          price: Math.round(item.price),
+        }));
+      if (clean.length) addedItems[bucket] = clean;
+    }
+
+    const hiddenItems = (overrides.hiddenItems ?? [])
+      .filter((key) => typeof key === "string" && key.length < 120)
+      .slice(0, 500);
 
     const { error } = await supabase
       .from("site_content")
-      .upsert({ key: "product_prices", data: { prices: changed } }, { onConflict: "key" });
+      .upsert(
+        { key: "product_catalogue", data: { prices, addedItems, hiddenItems } },
+        { onConflict: "key" },
+      );
     if (error) return { ok: false, message: error.message };
 
     revalidatePath("/", "layout");
     revalidatePath("/admin/produk");
-    return { ok: true, changed: Object.keys(changed).length };
+    return {
+      ok: true,
+      changed: Object.keys(prices).length,
+      added: Object.values(addedItems).flat().length,
+      hidden: hiddenItems.length,
+    };
   } catch (error) {
     return { ok: false, message: error instanceof Error ? error.message : "Gagal menyimpan." };
   }

@@ -3,26 +3,24 @@
 import { useMemo, useState } from "react";
 
 import { categoryGradient } from "@/data/categories";
-import { saveProductPricesAction } from "@/lib/admin/actions";
+import { saveCatalogueAction } from "@/lib/admin/actions";
 import { cn } from "@/lib/cn";
 import { formatRupiah } from "@/lib/format";
-import { priceKey, type PriceOverrides } from "@/lib/products";
+import { bucketKey, priceKey, type CatalogueOverrides, type PriceOverrides } from "@/lib/products";
 import type { CategoryIconId, ProductGroup, ProductItem } from "@/types";
 
-import { CategoryIcon, GridIcon, MenuIcon, SearchIcon } from "@/components/icons";
+import { CategoryIcon, GridIcon, MenuIcon, PlusIcon, SearchIcon } from "@/components/icons";
+
+import { RupiahInput } from "./RupiahInput";
 
 interface Card {
   key: string;
-  name: string;
-  meta?: string;
-  groupId: string;
+  item: ProductItem;
   groupLabel: string;
   vendorLabel?: string;
   icon: CategoryIconId;
   gradient: string;
-  price: number;
-  shipped: number;
-  original?: number;
+  shipped: boolean;
 }
 
 const PILL = (active: boolean) =>
@@ -32,52 +30,32 @@ const PILL = (active: boolean) =>
   );
 
 const FIELD =
-  "w-full rounded-xl border border-line px-3.5 py-2.5 text-sm font-semibold outline-none transition focus:border-brand";
+  "w-full rounded-xl border border-line bg-white px-3.5 py-2.5 text-sm font-semibold outline-none transition focus:border-brand";
 
-function buildCards(group: ProductGroup, vendorId: string | undefined, prices: PriceOverrides, defaults: PriceOverrides): Card[] {
-  const vendors = group.vendors ?? [];
-  const vendor = vendors.length ? (vendors.find((entry) => entry.id === vendorId) ?? vendors[0]) : undefined;
-  const items: ProductItem[] = vendors.length ? (vendor?.items ?? []) : (group.items ?? []);
-
-  return items.map((item) => {
-    const key = priceKey(group.id, vendor?.id, item.id);
-    return {
-      key,
-      name: `${item.name}${item.headline ? ` ${item.headline}` : ""}`.trim(),
-      meta: item.meta,
-      groupId: group.id,
-      groupLabel: group.label,
-      vendorLabel: vendor?.label,
-      icon: group.icon,
-      gradient: categoryGradient(group.icon),
-      price: prices[key] ?? item.price,
-      shipped: defaults[key] ?? item.price,
-      original: item.originalPrice,
-    };
-  });
-}
+const EMPTY_DRAFT = { name: "", headline: "", meta: "", badge: "", price: 0 };
 
 /**
- * Product catalogue editor.
+ * Catalogue editor.
  *
- * Laid out like the products-catalog dashboard wireframe: a title row with a
- * grid/list switch and a sort, pills per catalogue group carrying their item
- * count, a filter rail, and the prices themselves as cards.
+ * Laid out like the products-catalog dashboard wireframe: a title row with the
+ * grid/list switch, a sort and the add action; pills per catalogue group with
+ * their item count; a filter rail; and the catalogue itself as cards.
+ *
+ * Money fields use `RupiahInput`, so prices read as Rp 1.234.567 while typing.
  *
  * What the wireframe shows that this deliberately does not: product photos,
  * ratings, sold counts and stock levels. Belleva sells nominals, not stocked
- * goods, so there is nothing real to put in those slots — the card shows the
- * catalogue's own gradient and icon instead, the same treatment the mobile
- * recommendations use.
+ * goods, so there is nothing real for those slots — the card carries the
+ * catalogue's own gradient and icon instead.
  */
 export function PriceEditor({
   groups,
   defaults,
-  overriddenCount,
+  overrides,
 }: {
   groups: ProductGroup[];
   defaults: PriceOverrides;
-  overriddenCount: number;
+  overrides: CatalogueOverrides;
 }) {
   const [groupId, setGroupId] = useState(groups[0]?.id ?? "");
   const [vendorId, setVendorId] = useState<string | undefined>(groups[0]?.vendors?.[0]?.id);
@@ -88,61 +66,135 @@ export function PriceEditor({
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null);
 
-  const [prices, setPrices] = useState<PriceOverrides>(() => {
-    const effective: PriceOverrides = { ...defaults };
-    for (const group of groups) {
-      for (const vendor of group.vendors ?? []) {
-        for (const item of vendor.items ?? []) effective[priceKey(group.id, vendor.id, item.id)] = item.price;
-      }
-      for (const item of group.items ?? []) effective[priceKey(group.id, undefined, item.id)] = item.price;
-    }
-    return effective;
-  });
+  const [prices, setPrices] = useState<PriceOverrides>({ ...defaults });
+  const [addedItems, setAddedItems] = useState(overrides.addedItems);
+  const [hiddenItems, setHiddenItems] = useState<string[]>(overrides.hiddenItems);
+  const [adding, setAdding] = useState(false);
+  const [draft, setDraft] = useState(EMPTY_DRAFT);
 
   const group = groups.find((entry) => entry.id === groupId) ?? groups[0];
   const vendors = group.vendors ?? [];
   const activeVendorId = vendors.length
     ? (vendors.find((entry) => entry.id === vendorId)?.id ?? vendors[0].id)
     : undefined;
+  const bucket = bucketKey(group.id, activeVendorId);
 
-  const countsFor = (entry: ProductGroup) =>
-    (entry.items ?? entry.vendors?.[0]?.items ?? []).length;
+  const countsFor = (entry: ProductGroup) => {
+    const vendor = entry.vendors?.[0];
+    const own = entry.items ?? vendor?.items ?? [];
+    return own.length;
+  };
 
-  const cards = useMemo(() => {
-    const base = buildCards(group, activeVendorId, prices, defaults);
-    const term = search.trim().toLowerCase();
-    const filtered = base.filter((card) => {
-      if (onlyChanged && card.price === card.shipped) return false;
-      if (!term) return true;
-      return `${card.name} ${card.vendorLabel ?? ""} ${card.groupLabel}`.toLowerCase().includes(term);
+  const cards = useMemo<Card[]>(() => {
+    const vendor = vendors.find((entry) => entry.id === activeVendorId);
+    const shipped: ProductItem[] = vendors.length ? (vendor?.items ?? []) : (group.items ?? []);
+
+    const fromShipped = shipped.map((item) => {
+      const key = priceKey(group.id, activeVendorId, item.id);
+      const shippedPrice = defaults[key] ?? item.price;
+      return {
+        key,
+        item: { ...item, price: prices[key] ?? item.price },
+        groupLabel: group.label,
+        vendorLabel: vendor?.label,
+        icon: group.icon,
+        gradient: categoryGradient(group.icon),
+        shipped: true,
+      };
     });
-    if (sort === "name") return [...filtered].sort((a, b) => a.name.localeCompare(b.name));
-    if (sort === "price") return [...filtered].sort((a, b) => b.price - a.price);
+
+    const fromAdded = (addedItems[bucket] ?? []).map((item) => ({
+      key: priceKey(group.id, activeVendorId, item.id),
+      item: { ...item, price: prices[priceKey(group.id, activeVendorId, item.id)] ?? item.price },
+      groupLabel: group.label,
+      vendorLabel: vendor?.label,
+      icon: group.icon,
+      gradient: categoryGradient(group.icon),
+      // An added item's own price is its baseline, so it is never "overridden".
+      shipped: false,
+    }));
+
+    const term = search.trim().toLowerCase();
+    const visible = [...fromShipped, ...fromAdded].filter((card) => {
+      if (hiddenItems.includes(card.key)) return false;
+      if (onlyChanged && card.shipped && card.item.price === (defaults[card.key] ?? card.item.price)) {
+        return false;
+      }
+      if (!term) return true;
+      return `${card.item.name} ${card.item.headline ?? ""} ${card.vendorLabel ?? ""} ${card.groupLabel}`
+        .toLowerCase()
+        .includes(term);
+    });
+
+    if (sort === "name") return [...visible].sort((a, b) => a.item.name.localeCompare(b.item.name));
+    if (sort === "price") return [...visible].sort((a, b) => b.item.price - a.item.price);
     if (sort === "changed") {
-      return [...filtered].sort((a, b) => Number(b.price !== b.shipped) - Number(a.price !== a.shipped));
+      return [...visible].sort(
+        (a, b) => Number(b.item.price !== (defaults[b.key] ?? b.item.price)) -
+          Number(a.item.price !== (defaults[a.key] ?? a.item.price)),
+      );
     }
-    return filtered;
-  }, [group, activeVendorId, prices, defaults, search, onlyChanged, sort]);
+    return visible;
+  }, [group, vendors, activeVendorId, groupId, prices, defaults, addedItems, hiddenItems, search, onlyChanged, sort, bucket]);
 
   const totalItems = groups.reduce((sum, entry) => sum + countsFor(entry), 0);
   const changedTotal = Object.keys(prices).filter((key) => prices[key] !== (defaults[key] ?? prices[key])).length;
-  const changedHere = cards.filter((card) => card.price !== card.shipped).length;
+  const addedTotal = Object.values(addedItems).flat().length;
+
+  function setPrice(key: string, value: number) {
+    setPrices((prev) => ({ ...prev, [key]: value }));
+  }
+
+  function addItem() {
+    if (!draft.name.trim() || draft.price <= 0) {
+      setMessage({ ok: false, text: "Nama produk dan harga wajib diisi." });
+      return;
+    }
+    const item: ProductItem = {
+      id: `c-${Date.now().toString(36)}`,
+      name: draft.name.trim(),
+      headline: draft.headline.trim() || undefined,
+      meta: draft.meta.trim() || undefined,
+      badge: draft.badge.trim() || undefined,
+      price: draft.price,
+    };
+    setAddedItems((prev) => ({ ...prev, [bucket]: [...(prev[bucket] ?? []), item] }));
+    setDraft(EMPTY_DRAFT);
+    setAdding(false);
+    setMessage({ ok: true, text: `“${item.name}” ditambahkan — jangan lupa Simpan.` });
+  }
+
+  function removeItem(key: string, shipped: boolean) {
+    if (shipped) {
+      setHiddenItems((prev) => [...prev, key]);
+      setMessage({ ok: true, text: "Produk bawaan disembunyikan — jangan lupa Simpan." });
+      return;
+    }
+    setAddedItems((prev) => ({
+      ...prev,
+      [bucket]: (prev[bucket] ?? []).filter((item) => priceKey(group.id, activeVendorId, item.id) !== key),
+    }));
+    setPrices((prev) => {
+      const next = { ...prev };
+      delete next[key];
+      return next;
+    });
+    setMessage({ ok: true, text: "Produk dihapus — jangan lupa Simpan." });
+  }
 
   async function save() {
     setBusy(true);
     setMessage(null);
-    const result = await saveProductPricesAction(prices);
+    const result = await saveCatalogueAction({ prices, addedItems, hiddenItems });
     setBusy(false);
     setMessage(
       result.ok
-        ? { ok: true, text: `Tersimpan — ${result.changed ?? 0} harga di luar bawaan, dan situs langsung memakainya.` }
+        ? {
+            ok: true,
+            text: `Tersimpan — ${result.changed ?? 0} harga diubah, ${result.added ?? 0} produk tambahan, ${result.hidden ?? 0} disembunyikan. Situs langsung memakainya.`,
+          }
         : { ok: false, text: result.message ?? "Gagal menyimpan." },
     );
-  }
-
-  function setPrice(key: string, value: string) {
-    const next = Number(value.replace(/\D/g, "")) || 0;
-    setPrices((prev) => ({ ...prev, [key]: next }));
   }
 
   return (
@@ -152,8 +204,9 @@ export function PriceEditor({
         <div>
           <h3 className="h-display text-xl font-extrabold">Katalog produk</h3>
           <p className="mt-1 text-sm text-muted">
-            Menampilkan {cards.length} dari {totalItems} harga
-            {changedTotal > 0 ? ` · ${changedTotal} di luar bawaan` : ""}
+            Menampilkan {cards.length} dari {totalItems} produk bawaan
+            {addedTotal > 0 ? ` + ${addedTotal} tambahan` : ""}
+            {changedTotal > 0 ? ` · ${changedTotal} harga diubah` : ""}
           </p>
         </div>
 
@@ -190,14 +243,103 @@ export function PriceEditor({
 
           <button
             type="button"
+            onClick={() => setAdding((open) => !open)}
+            className="inline-flex min-h-10 items-center gap-1.5 rounded-pill border border-line px-4 text-sm font-bold text-brand transition hover:border-brand hover:bg-soft"
+          >
+            <PlusIcon />
+            Tambah produk
+          </button>
+
+          <button
+            type="button"
             onClick={save}
             disabled={busy}
             className="blue-grad inline-flex min-h-10 items-center rounded-pill px-5 text-sm font-bold text-white disabled:opacity-70"
           >
-            {busy ? "Menyimpan…" : "Simpan harga"}
+            {busy ? "Menyimpan…" : "Simpan"}
           </button>
         </div>
       </div>
+
+      {/* ------------------------- Add product form ------------------------- */}
+      {adding && (
+        <section className="card p-5">
+          <p className="font-bold">Produk baru</p>
+          <p className="mt-1 text-xs text-muted">
+            Ditambahkan ke <strong className="text-ink">{group.label}</strong>
+            {vendors.length > 0 ? ` · ${vendors.find((e) => e.id === activeVendorId)?.label}` : ""}.
+          </p>
+
+          <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <label className="block">
+              <span className="text-xs font-semibold text-muted">Nama produk</span>
+              <input
+                value={draft.name}
+                onChange={(event) => setDraft({ ...draft, name: event.target.value })}
+                placeholder="mis. Pulsa 75.000"
+                className={cn(FIELD, "mt-1.5")}
+              />
+            </label>
+            <label className="block">
+              <span className="text-xs font-semibold text-muted">Nilai tampil (opsional)</span>
+              <input
+                value={draft.headline}
+                onChange={(event) => setDraft({ ...draft, headline: event.target.value })}
+                placeholder="mis. 75.000 atau 10 GB"
+                className={cn(FIELD, "mt-1.5")}
+              />
+            </label>
+            <label className="block">
+              <span className="text-xs font-semibold text-muted">Keterangan (opsional)</span>
+              <input
+                value={draft.meta}
+                onChange={(event) => setDraft({ ...draft, meta: event.target.value })}
+                placeholder="mis. Masa aktif 30 hari"
+                className={cn(FIELD, "mt-1.5")}
+              />
+            </label>
+            <label className="block">
+              <span className="text-xs font-semibold text-muted">Badge (opsional)</span>
+              <input
+                value={draft.badge}
+                onChange={(event) => setDraft({ ...draft, badge: event.target.value })}
+                placeholder="mis. Terlaris"
+                className={cn(FIELD, "mt-1.5")}
+              />
+            </label>
+          </div>
+
+          <div className="mt-4 flex flex-wrap items-end gap-3">
+            <label className="block w-52">
+              <span className="text-xs font-semibold text-muted">Harga jual</span>
+              <RupiahInput
+                label="Harga produk baru"
+                value={draft.price}
+                onChange={(price) => setDraft({ ...draft, price })}
+                placeholder="0"
+                className="mt-1.5"
+              />
+            </label>
+            <button
+              type="button"
+              onClick={addItem}
+              className="blue-grad inline-flex min-h-11 items-center rounded-pill px-6 text-sm font-bold text-white"
+            >
+              Tambahkan
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setAdding(false);
+                setDraft(EMPTY_DRAFT);
+              }}
+              className="inline-flex min-h-11 items-center rounded-pill border border-line px-5 text-sm font-semibold text-muted"
+            >
+              Batal
+            </button>
+          </div>
+        </section>
+      )}
 
       {/* --------------------------- Group pills --------------------------- */}
       <div className="no-scrollbar flex gap-2 overflow-x-auto pb-1">
@@ -213,7 +355,12 @@ export function PriceEditor({
             className={PILL(entry.id === group.id)}
           >
             {entry.label}
-            <span className={cn("rounded-pill px-1.5 text-[10px]", entry.id === group.id ? "bg-white/20" : "bg-soft")}>
+            <span
+              className={cn(
+                "rounded-pill px-1.5 text-[10px]",
+                entry.id === group.id ? "bg-white/20" : "bg-soft",
+              )}
+            >
               {countsFor(entry)}
             </span>
           </button>
@@ -244,7 +391,7 @@ export function PriceEditor({
               value={search}
               onChange={(event) => setSearch(event.target.value)}
               placeholder="Cari di katalog…"
-              aria-label="Cari harga"
+              aria-label="Cari produk"
               className="w-full min-w-0 bg-transparent py-2.5 text-sm font-semibold outline-none"
             />
           </div>
@@ -291,9 +438,9 @@ export function PriceEditor({
         {/* --------------------------- Price cards -------------------------- */}
         {cards.length === 0 ? (
           <div className="card p-10 text-center">
-            <p className="font-bold">Tidak ada harga yang cocok</p>
+            <p className="font-bold">Tidak ada produk yang cocok</p>
             <p className="mx-auto mt-2 max-w-sm text-sm text-muted">
-              Longgarkan filternya, atau kosongkan kolom pencarian.
+              Longgarkan filternya, atau tambah produk baru lewat tombol di atas.
             </p>
           </div>
         ) : (
@@ -304,7 +451,8 @@ export function PriceEditor({
             )}
           >
             {cards.map((card) => {
-              const changed = card.price !== card.shipped;
+              const baseline = card.shipped ? (defaults[card.key] ?? card.item.price) : card.item.price;
+              const changed = card.item.price !== baseline;
               return (
                 <li key={card.key} className="card flex h-full flex-col p-4">
                   <div className="flex items-start gap-3">
@@ -317,40 +465,55 @@ export function PriceEditor({
                     </span>
 
                     <span className="min-w-0 flex-1">
-                      <span className="block truncate text-sm font-bold text-ink">{card.name}</span>
+                      <span className="block truncate text-sm font-bold text-ink">
+                        {card.item.headline ?? card.item.name}
+                      </span>
                       <span className="mt-0.5 block truncate text-xs text-muted">
-                        {card.groupLabel}
-                        {card.vendorLabel ? ` · ${card.vendorLabel}` : ""}
+                        {card.item.headline ? `${card.item.name} · ` : ""}
+                        {card.vendorLabel ?? card.groupLabel}
                       </span>
                     </span>
 
-                    {changed && (
+                    {!card.shipped && (
+                      <span className="shrink-0 rounded-pill bg-brand/10 px-2 py-0.5 text-[10px] font-bold text-brand">
+                        baru
+                      </span>
+                    )}
+                    {changed && card.shipped && (
                       <span className="shrink-0 rounded-pill bg-warn/15 px-2 py-0.5 text-[10px] font-bold text-warn">
                         diubah
                       </span>
                     )}
                   </div>
 
-                  {card.meta && <p className="mt-3 truncate text-xs text-muted">{card.meta}</p>}
+                  {card.item.badge && (
+                    <span className="mt-3 inline-block self-start rounded-pill bg-warn px-2 py-0.5 text-[10px] font-bold text-white">
+                      {card.item.badge}
+                    </span>
+                  )}
+                  {card.item.meta && <p className="mt-2 truncate text-xs text-muted">{card.item.meta}</p>}
 
                   <div className="mt-auto pt-4">
-                    <label className="block">
-                      <span className="text-[11px] font-semibold text-muted">Harga jual</span>
-                      <span className="mt-1 flex items-center gap-2">
-                        <span className="text-xs font-semibold text-muted">Rp</span>
-                        <input
-                          inputMode="numeric"
-                          value={card.price}
-                          onChange={(event) => setPrice(card.key, event.target.value)}
-                          aria-label={`Harga ${card.name}`}
-                          className={cn(FIELD, "text-right font-bold", changed && "border-brand")}
-                        />
+                    <span className="text-[11px] font-semibold text-muted">Harga jual</span>
+                    <RupiahInput
+                      label={`Harga ${card.item.name}`}
+                      value={card.item.price}
+                      onChange={(value) => setPrice(card.key, value)}
+                      placeholder="0"
+                      className={cn("mt-1", changed && "border-brand")}
+                    />
+                    <div className="mt-2 flex items-center justify-between gap-2">
+                      <span className="text-[11px] text-muted">
+                        {card.shipped ? `bawaan ${formatRupiah(baseline)}` : "produk tambahan"}
                       </span>
-                    </label>
-                    <p className="mt-2 text-[11px] text-muted">
-                      bawaan {formatRupiah(card.shipped)}
-                      {card.original ? ` · harga coret ${formatRupiah(card.original)}` : ""}
-                    </p>
+                      <button
+                        type="button"
+                        onClick={() => removeItem(card.key, card.shipped)}
+                        className="text-[11px] font-semibold text-danger transition hover:underline"
+                      >
+                        {card.shipped ? "Sembunyikan" : "Hapus"}
+                      </button>
+                    </div>
                   </div>
                 </li>
               );
@@ -366,11 +529,16 @@ export function PriceEditor({
           disabled={busy}
           className="blue-grad inline-flex min-h-11 items-center rounded-pill px-6 text-sm font-bold text-white disabled:opacity-70"
         >
-          {busy ? "Menyimpan…" : "Simpan harga"}
+          {busy ? "Menyimpan…" : "Simpan perubahan"}
         </button>
-        <span className="text-xs text-muted">{changedHere} harga di tampilan ini berbeda dari bawaan</span>
+        <span className="text-xs text-muted">
+          {changedTotal} harga diubah · {addedTotal} produk tambahan · {hiddenItems.length} disembunyikan
+        </span>
         {message && (
-          <p role="status" className={cn("text-sm font-semibold", message.ok ? "text-success" : "text-danger")}>
+          <p
+            role="status"
+            className={cn("text-sm font-semibold", message.ok ? "text-success" : "text-danger")}
+          >
             {message.text}
           </p>
         )}
