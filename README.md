@@ -23,6 +23,7 @@ src/
     layout.tsx      # shell global: Header + main + Footer
     page.tsx        # landing page
     bayar/          # halaman pembayaran (/bayar) — noindex
+    cek-transaksi/  # halaman cek transaksi (/cek-transaksi) — noindex
     globals.css     # token desain (@theme) + komponen
     fonts.ts, sitemap.ts, robots.ts, icon.png
   components/
@@ -68,17 +69,22 @@ Shortcut ikon di hero ("Pulsa", "Paket Data") langsung ganti tab yang aktif.
 
 Di layar HP, home page bukan landing page lagi — tapi **app home** yang mengikuti
 wireframe `hot-pot-restaurant-home`: app bar biru (logo + tombol bantuan, wave
-divider) → sapaan + search → promo rail dengan pagination dots → rail kategori →
-baris promo → grid rekomendasi 2 kolom → bottom nav fixed dengan FAB **Top Up**.
+divider) → sapaan + search → **banner hero** → promo rail dengan pagination dots →
+grid layanan → baris promo → grid rekomendasi 2 kolom → bottom nav fixed dengan
+FAB **Top Up**.
 
 - **Breakpoint-nya `lg` (1024px).** `MobileHome` di-`lg:hidden`, sedangkan Hero +
   PromoBanner di-`hidden lg:block` — jadi cuma satu komposisi yang ter-layout di
   lebar mana pun. Desktop tidak berubah.
 - **Header situs disembunyikan di mobile, hanya di route `/`** (`usePathname` di
-  `Header.tsx`). `/bayar` tetap pakai header biasa.
+  `Header.tsx`). `/bayar` dan `/cek-transaksi` tetap pakai header biasa.
+- **Banner hero** (`mobile-hero-banner.tsx`) memakai permukaan brand yang sudah ada
+  (gradient `.blue-grad`, radius hero, font plus Jakarta Sans) — jadi HP tetap
+  menyampaikan hal yang sama dengan hero artwork di desktop. Isinya cuma teks +
+  satu CTA, karena belum ada aset ilustrasi untuk mobile.
 - **Search-nya hidup** — filternya jalan di `mobileCatalogue`
   (`src/data/mobile-home.ts`), maksimal 8 hasil, plus empty state.
-- **Bottom nav:** Beranda · Produk · FAB Top Up · Promo · Daftar. Tidak ada menu
+- **Bottom nav:** Beranda · Produk · FAB Top Up · Promo · Transaksi. Tidak ada menu
   Akun. Beranda = scroll ke atas, FAB = set tab Pulsa lalu scroll ke `#produk`.
   Tab aktif ikut scroll-spy, bukan hardcode.
 - **Section landing tetap lanjut** di bawah app home (Produk, Keunggulan, Langkah,
@@ -92,6 +98,28 @@ Tiga hal di wireframe yang tidak bisa ditiru apa adanya karena asetnya belum ada
    dan bikin ilustrasi tiruan lebih buruk daripada tidak ada.
 4. **Rail kategori horizontal → grid 4×2.** Rail-nya memotong layanan terakhir di HP;
    grid 4 kolom menampilkan kedelapan layanan utuh tanpa ada yang kepotong.
+
+## Cek Transaksi (/cek-transaksi)
+
+Tab **Transaksi** di bottom nav mobile dan link di footer desktop menuju halaman ini.
+
+Halaman ini **mencari di riwayat yang tersimpan di browser pengunjung**, bukan di
+server — checkout Belleva masih simulasi dan tidak punya backend transaksi, jadi
+mencari ke server memang tidak mungkin. Supaya tetap jujur:
+
+- Setiap pesanan dicatat ke `localStorage` (`src/lib/transactions.ts`) begitu
+  checkout masuk tahap menunggu pembayaran, lalu statusnya di-update jadi
+  `berhasil` saat selesai. Maksimal 20 transaksi terakhir per perangkat.
+- Store-nya dibaca React lewat `useSyncExternalStore`, jadi tidak ada state yang
+  disalin di `useEffect` dan SSR tetap konsisten.
+- Pencarian cocok dengan nomor tujuan **atau** nomor referensi. Nomor dinormalisasi
+  dulu, jadi `0812…`, `812…`, dan `+62 812…` menemukan transaksi yang sama.
+- Kalau tidak ketemu, halamannya menjelaskan bahwa riwayat hanya ada di perangkat
+  yang dipakai bertransaksi — bukan pura-pura sedang mencari di server.
+
+Tab-nya berlabel **"Transaksi"**, bukan "Cek Transaksi": lima tab di layar 360px
+hanya memberi 68px per tab sementara label panjangnya butuh ~71px, jadi labelnya
+turun ke baris kedua dan ikonnya jadi tidak sejajar dengan tab lain.
 
 ## Cara maintain
 

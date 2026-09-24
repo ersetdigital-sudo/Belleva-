@@ -216,7 +216,7 @@ export interface MobilePromo {
 }
 
 /** Bottom tab-bar slots on the mobile app home. */
-export type MobileNavId = "beranda" | "produk" | "promo" | "daftar";
+export type MobileNavId = "beranda" | "produk" | "promo" | "transaksi";
 
 export interface MobileNavItem {
   id: MobileNavId;

@@ -9,7 +9,7 @@ import { cn } from "@/lib/cn";
 import { useActiveSection } from "@/lib/use-active-section";
 import type { MobileNavId, MobileNavItem } from "@/types";
 
-import { BoltIcon, GridIcon, HomeIcon, TagIcon, UserPlusIcon } from "@/components/icons";
+import { BoltIcon, GridIcon, HomeIcon, ReceiptIcon, TagIcon } from "@/components/icons";
 
 import { useProductTab } from "../product-tab-context";
 
@@ -17,11 +17,11 @@ const NAV_ICONS: Record<MobileNavId, (props: { className?: string }) => React.Re
   beranda: HomeIcon,
   produk: GridIcon,
   promo: TagIcon,
-  daftar: UserPlusIcon,
+  transaksi: ReceiptIcon,
 };
 
 /** Section ids the tab bar spies on — "beranda" is handled by the scroll position. */
-const SPY_IDS = ["produk", "promo", "daftar"] as const;
+const SPY_IDS = ["produk", "promo"] as const;
 
 /** Home is "active" while the page is still at the top. */
 const TOP_THRESHOLD = 120;

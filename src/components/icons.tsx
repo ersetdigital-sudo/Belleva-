@@ -509,7 +509,7 @@ export function GridIcon({ size = 22, className }: { size?: number; className?: 
   );
 }
 
-export function TagIcon({ size = 18, className }: { size?: number; className?: string }) {
+export function TagIcon({ size = 22, className }: { size?: number; className?: string }) {
   return (
     <svg {...APP_ICON} width={size} height={size} className={className}>
       <path d="M3.8 11.3V5.1a1.3 1.3 0 0 1 1.3-1.3h6.2a1.3 1.3 0 0 1 .9.4l7.8 7.8a1.3 1.3 0 0 1 0 1.8l-6.2 6.2a1.3 1.3 0 0 1-1.8 0l-7.8-7.8a1.3 1.3 0 0 1-.4-.9Z" />
@@ -527,12 +527,12 @@ export function BoltIcon({ size = 24, className }: { size?: number; className?: 
   );
 }
 
-export function UserPlusIcon({ size = 22, className }: { size?: number; className?: string }) {
+/** Receipt — the "Cek Transaksi" tab. */
+export function ReceiptIcon({ size = 22, className }: { size?: number; className?: string }) {
   return (
     <svg {...APP_ICON} width={size} height={size} className={className}>
-      <circle cx="9.8" cy="8" r="3.6" />
-      <path d="M3.4 20c0-3.6 2.9-6.1 6.4-6.1s6.4 2.5 6.4 6.1" />
-      <path d="M18.6 7.4v5.2M16 10h5.2" />
+      <path d="M6.5 4.5a1 1 0 0 1 1-1h9a1 1 0 0 1 1 1v15.2l-2.7-1.7-2.3 1.7-2.3-1.7-2.7 1.7V4.5Z" />
+      <path d="M9 8.6h6M9 12.2h3.6" />
     </svg>
   );
 }

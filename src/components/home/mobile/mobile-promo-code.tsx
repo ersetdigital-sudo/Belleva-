@@ -17,7 +17,7 @@ export function MobilePromoCode() {
         className="flex items-center gap-3 rounded-2xl bg-warn/15 px-4 py-3.5 transition-colors hover:bg-warn/20"
       >
         <span className="grid h-9 w-9 shrink-0 place-items-center rounded-pill bg-warn text-white">
-          <TagIcon />
+          <TagIcon size={18} />
         </span>
 
         <span className="min-w-0 flex-1">

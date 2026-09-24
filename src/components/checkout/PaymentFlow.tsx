@@ -12,6 +12,7 @@ import { resolvePostpaid, resolvePrepaid } from "@/lib/catalog";
 import { cn } from "@/lib/cn";
 import { formatRupiah } from "@/lib/format";
 import { siteConfig } from "@/lib/site";
+import { saveTransaction } from "@/lib/transactions";
 import type { PaymentChannel, PaymentMethod, PaymentMethodId } from "@/types";
 
 import { CheckIcon, PaymentIcon } from "@/components/icons";
@@ -190,6 +191,25 @@ export function PaymentFlow() {
 
   const price = order?.kind === "prepaid" ? (order.price ?? 0) : 0;
   const total = order?.kind === "prepaid" ? price + siteConfig.serviceFee : (bill?.total ?? 0);
+
+  /**
+   * Mirror the order into this browser's history as soon as it is created, then
+   * again when it settles. That store is what the "Cek Transaksi" page reads —
+   * the simulation has no server-side record to query.
+   */
+  useEffect(() => {
+    if (!order) return;
+    if (status !== "awaiting" && status !== "done") return;
+    saveTransaction({
+      reference,
+      customer,
+      productName: order.name,
+      groupLabel: order.group.label,
+      method: paymentLabel,
+      total,
+      status: status === "done" ? "berhasil" : "menunggu",
+    });
+  }, [order, status, reference, customer, paymentLabel, total]);
 
   function startProcessing() {
     setStatus("processing");

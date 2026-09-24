@@ -39,15 +39,20 @@ export const mobilePromos: MobilePromo[] = [
 ];
 
 /**
- * Bottom tab-bar slots. The last one takes the wireframe's "Account" position
- * without being an account section — it is the sign-up CTA, which the desktop
- * header carries but the mobile app bar does not.
+ * Bottom tab-bar slots. The last one replaces the wireframe's "Account"
+ * position with the transaction lookup — Belleva has no account area, and
+ * "Cek Transaksi" is the thing visitors actually come back for.
+ *
+ * The tab reads "Transaksi" rather than "Cek Transaksi": five tabs on a 360px
+ * screen leave 68px each, and the longer label needs ~71px, so it wrapped to
+ * two lines and pushed its icon out of line with the rest. The page it opens is
+ * still titled "Cek Transaksi".
  */
 export const mobileNav: MobileNavItem[] = [
   { id: "beranda", label: "Beranda", href: "/" },
   { id: "produk", label: "Produk", href: "/#produk" },
   { id: "promo", label: "Promo", href: "/#promo" },
-  { id: "daftar", label: "Daftar", href: "/#daftar" },
+  { id: "transaksi", label: "Transaksi", href: "/cek-transaksi" },
 ];
 
 const prepaidGroups = productGroups.filter((group) => group.flow === "prepaid");

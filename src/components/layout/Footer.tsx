@@ -6,6 +6,8 @@ import { SocialIcon } from "@/components/icons";
 import { Logo } from "./Logo";
 
 const helpMenu = [
+  /** The mobile app home reaches this from its tab bar; desktop from here. */
+  { label: "Cek Transaksi", href: "/cek-transaksi" },
   { label: "Pusat Bantuan", href: externalLinks.helpCenter },
   { label: "Hubungi Kami", href: externalLinks.contact },
   { label: "Syarat & Ketentuan", href: externalLinks.terms },
