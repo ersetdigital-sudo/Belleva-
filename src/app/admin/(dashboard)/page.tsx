@@ -229,16 +229,6 @@ export default async function AdminHomePage() {
           </ul>
         </SectionCard>
       </div>
-
-      {/* --------------------------- Not editable yet -------------------------- */}
-      <SectionCard
-        title="Belum bisa diatur dari panel"
-        description="Hero, kategori layanan, promo, keunggulan, langkah, testimoni, FAQ, CTA, navigasi, footer, dan artikel Pusat Bantuan. Skema datanya sudah siap menampung semuanya, jadi tinggal ditambahkan halamannya."
-      >
-        <p className="text-sm text-muted">
-          Sampai itu ada, bagian tersebut masih ikut kode dan berubah lewat deploy.
-        </p>
-      </SectionCard>
     </div>
   );
 }
