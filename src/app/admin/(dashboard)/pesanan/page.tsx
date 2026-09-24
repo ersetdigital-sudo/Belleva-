@@ -1,13 +1,8 @@
 import { OrderStatusButtons } from "@/components/admin/OrderStatusButtons";
 import { PageHeader } from "@/components/admin/ui";
+import { cn } from "@/lib/cn";
 import { formatDateTime, formatRupiah } from "@/lib/format";
-import { ORDER_STATUSES, getOrders } from "@/lib/orders";
-
-const STATUS_STYLE: Record<string, string> = {
-  menunggu: "bg-warn/15 text-warn",
-  berhasil: "bg-success-soft text-success",
-  gagal: "bg-danger-soft text-danger",
-};
+import { ORDER_STATUSES, ORDER_STATUS_STYLE, getOrders, orderStatusLabel } from "@/lib/orders";
 
 const FIELD =
   "min-h-10 rounded-xl border border-line bg-white px-3.5 text-sm font-semibold outline-none transition focus:border-brand";
@@ -103,12 +98,12 @@ export default async function AdminPesananPage({ searchParams }: PageProps<"/adm
                     </td>
                     <td className="px-5 py-3.5">
                       <span
-                        className={`inline-block rounded-pill px-2.5 py-1 text-[11px] font-bold whitespace-nowrap ${
-                          STATUS_STYLE[order.status] ?? STATUS_STYLE.menunggu
-                        }`}
+                        className={cn(
+                          "inline-block rounded-pill px-2.5 py-1 text-[11px] font-bold whitespace-nowrap",
+                          ORDER_STATUS_STYLE[order.status],
+                        )}
                       >
-                        {ORDER_STATUSES.find((entry) => entry.value === order.status)?.label ??
-                          order.status}
+                        {orderStatusLabel(order.status)}
                       </span>
                     </td>
                     <td className="px-5 py-3.5 text-xs whitespace-nowrap text-muted">

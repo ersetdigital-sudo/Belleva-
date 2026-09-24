@@ -10,6 +10,20 @@ export const ORDER_STATUSES = [
 
 export type OrderStatus = (typeof ORDER_STATUSES)[number]["value"];
 
+/**
+ * Badge styling per status. It lives beside the labels so the two cannot drift —
+ * a status that reads "Berhasil" must never be shown in the pending colour.
+ */
+export const ORDER_STATUS_STYLE: Record<OrderStatus, string> = {
+  menunggu: "bg-warn/15 text-warn",
+  berhasil: "bg-success-soft text-success",
+  gagal: "bg-danger-soft text-danger",
+};
+
+export function orderStatusLabel(status: OrderStatus): string {
+  return ORDER_STATUSES.find((entry) => entry.value === status)?.label ?? status;
+}
+
 export interface Order {
   id: string;
   reference: string;
