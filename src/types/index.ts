@@ -200,6 +200,8 @@ export interface PaymentMethod {
   stroke: string;
   /** Channel choices revealed when the method is selected (bank / e-wallet). */
   channels?: PaymentChannel[];
+  /** QRIS only: the merchant's uploaded QR image, when one has been set in /admin. */
+  qrUrl?: string;
   /** Step-by-step payment guide; `{channel}` is replaced with the chosen label. */
   instructions: string[];
 }

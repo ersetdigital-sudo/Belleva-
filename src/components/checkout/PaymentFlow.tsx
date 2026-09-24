@@ -6,9 +6,9 @@ import { useSearchParams } from "next/navigation";
 import { useReducedMotion } from "motion/react";
 import { QRCodeSVG } from "qrcode.react";
 
-import { paymentMethods } from "@/data/payment-methods";
 import { groupStroomCode, inquireBill, makeStroomCode } from "@/lib/billing";
 import { resolvePostpaid, resolvePrepaid } from "@/lib/catalog";
+import { optimisedUrl } from "@/lib/cloudinary-url";
 import { cn } from "@/lib/cn";
 import { formatRupiah } from "@/lib/format";
 import { siteConfig } from "@/lib/site";
@@ -136,7 +136,11 @@ function CopyButton({ value, label = "Salin" }: { value: string; label?: string 
   );
 }
 
-export function PaymentFlow() {
+/**
+ * Payment methods come from the caller rather than a static import: /bayar
+ * reads them from the database (editable in /admin) and passes them down.
+ */
+export function PaymentFlow({ methods }: { methods: PaymentMethod[] }) {
   const params = useSearchParams();
   const reduceMotion = useReducedMotion();
 
@@ -176,7 +180,7 @@ export function PaymentFlow() {
     [],
   );
 
-  const activeMethod = paymentMethods.find((entry) => entry.id === method) ?? paymentMethods[0];
+  const activeMethod = methods.find((entry) => entry.id === method) ?? methods[0];
   const activeChannel =
     activeMethod.channels?.find((entry) => entry.id === channelId) ?? activeMethod.channels?.[0];
   const paymentLabel = activeChannel
@@ -402,13 +406,27 @@ export function PaymentFlow() {
 
           {activeMethod.id === "qris" ? (
             <div className="mt-4 grid place-items-center rounded-2xl border border-line bg-white p-5">
-              <QRCodeSVG
-                value={payment!.code}
-                size={176}
-                level="M"
-                bgColor="#ffffff"
-                fgColor="#0d1b39"
-              />
+              {activeMethod.qrUrl ? (
+                /* The merchant QR uploaded in /admin, served through Cloudinary's
+                   own optimisation so a large original is never downloaded. */
+                /* eslint-disable-next-line @next/next/no-img-element */
+                <img
+                  src={optimisedUrl(activeMethod.qrUrl, 600)}
+                  alt="Kode QRIS pembayaran Belleva"
+                  width={176}
+                  height={176}
+                  loading="lazy"
+                  className="h-44 w-44 object-contain"
+                />
+              ) : (
+                <QRCodeSVG
+                  value={payment!.code}
+                  size={176}
+                  level="M"
+                  bgColor="#ffffff"
+                  fgColor="#0d1b39"
+                />
+              )}
               <p className="mt-3 text-center text-xs text-muted">
                 Berlaku sampai {formatClock(payment!.deadline)} WIB
               </p>
@@ -592,7 +610,7 @@ export function PaymentFlow() {
               Metode Pembayaran
             </h2>
             <div className="divide-y divide-line">
-              {paymentMethods.map((entry) => {
+              {methods.map((entry) => {
                 const selected = entry.id === method;
                 const picked =
                   entry.channels?.find((c) => c.id === channelId) ?? entry.channels?.[0];

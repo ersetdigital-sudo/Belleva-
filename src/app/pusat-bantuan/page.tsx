@@ -1,7 +1,11 @@
 import type { Metadata } from "next";
 
 import { HelpCenter } from "@/components/support/HelpCenter";
+import { getContacts } from "@/lib/settings";
 import { siteConfig } from "@/lib/site";
+
+/** Contacts are editable in /admin, so the page is cached and refreshed. */
+export const revalidate = 300;
 
 const TITLE = "Pusat Bantuan";
 const DESCRIPTION =
@@ -21,6 +25,7 @@ export const metadata: Metadata = {
   },
 };
 
-export default function PusatBantuanPage() {
-  return <HelpCenter />;
+export default async function PusatBantuanPage() {
+  const contacts = await getContacts();
+  return <HelpCenter contacts={contacts} />;
 }

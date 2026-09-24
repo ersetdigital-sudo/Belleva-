@@ -6,6 +6,7 @@ import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 
 import { helpArticles, helpTopics } from "@/data/help";
 import { cn } from "@/lib/cn";
+import type { SiteContacts } from "@/lib/settings";
 import type { HelpTopicId } from "@/types";
 
 import { ContactLinks } from "@/components/support/ContactLinks";
@@ -20,10 +21,10 @@ type TopicFilter = HelpTopicId | "semua";
  * chips narrow it to one topic, and results stay grouped by topic so the shape
  * of the help stays visible while filtering. Answers come from `data/help.ts`.
  *
- * Contact buttons only render when `externalLinks.whatsapp` / `.email` are set —
- * an empty value hides them rather than shipping a button that goes nowhere.
+ * Contact buttons only render when the contacts are set in /admin/kontak — an
+ * empty value hides them rather than shipping a button that goes nowhere.
  */
-export function HelpCenter() {
+export function HelpCenter({ contacts }: { contacts: SiteContacts }) {
   const [query, setQuery] = useState("");
   const [topic, setTopic] = useState<TopicFilter>("semua");
   const [openId, setOpenId] = useState<string | null>(null);
@@ -213,7 +214,7 @@ export function HelpCenter() {
             >
               Pertanyaan Umum
             </Link>
-            <ContactLinks />
+            <ContactLinks contacts={contacts} />
           </div>
         </section>
       </div>

@@ -5,6 +5,7 @@ import Link from "next/link";
 
 import { cn } from "@/lib/cn";
 import { useActiveHeading } from "@/lib/use-active-heading";
+import type { SiteContacts } from "@/lib/settings";
 import type { LegalDocument } from "@/types";
 
 import { ContactLinks } from "@/components/support/ContactLinks";
@@ -15,7 +16,13 @@ import { ContactLinks } from "@/components/support/ContactLinks";
  * measure. The rail uses a heading-aware scroll-spy, so on a document whose
  * headings sit close together the highlighted entry is the one being read.
  */
-export function LegalDocumentView({ document }: { document: LegalDocument }) {
+export function LegalDocumentView({
+  document,
+  contacts,
+}: {
+  document: LegalDocument;
+  contacts: SiteContacts;
+}) {
   const ids = useMemo(() => document.sections.map((section) => section.id), [document]);
   const active = useActiveHeading(ids);
 
@@ -105,7 +112,7 @@ export function LegalDocumentView({ document }: { document: LegalDocument }) {
                 >
                   Cek Transaksi
                 </Link>
-                <ContactLinks />
+                <ContactLinks contacts={contacts} />
               </div>
             </section>
           </div>
