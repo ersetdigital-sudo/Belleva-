@@ -264,6 +264,8 @@ export function RupiahInput({
   onChange,
   className,
   id,
+  autoFocus,
+  onKeyDown,
 }: {
   label: string;
   hint?: string;
@@ -273,6 +275,9 @@ export function RupiahInput({
   onChange: (value: number) => void;
   className?: string;
   id?: string;
+  autoFocus?: boolean;
+  /** Lets a caller commit on Enter and back out on Escape. */
+  onKeyDown?: React.KeyboardEventHandler<HTMLInputElement>;
 }) {
   const reactId = useId();
   const fieldId = id ?? reactId;
@@ -302,6 +307,8 @@ export function RupiahInput({
           value={formatThousands(value)}
           onChange={(event) => onChange(parseRupiah(event.target.value))}
           inputMode="numeric"
+          autoFocus={autoFocus}
+          onKeyDown={onKeyDown}
           aria-invalid={error ? true : undefined}
           aria-describedby={describedBy}
           className="min-h-11 w-full min-w-0 bg-transparent text-right text-sm font-bold text-ink tabular-nums outline-none"

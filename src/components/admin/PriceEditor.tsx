@@ -14,6 +14,7 @@ import {
   EyeOffIcon,
   GridIcon,
   MenuIcon,
+  PencilIcon,
   PlusIcon,
   SearchIcon,
   TrashIcon,
@@ -77,6 +78,9 @@ export function PriceEditor({
   const [addedGroups, setAddedGroups] = useState(overrides.addedGroups);
   const [panelOpen, setPanelOpen] = useState(false);
   const [categoryOpen, setCategoryOpen] = useState(false);
+  /** Key of the one card whose price is open for editing, if any. */
+  const [editing, setEditing] = useState<string | null>(null);
+  const [editValue, setEditValue] = useState(0);
 
   /*
    * The server sends the shipped catalogue plus whatever was saved last time; a
@@ -164,6 +168,21 @@ export function PriceEditor({
 
   function setPrice(key: string, value: number) {
     setPrices((prev) => ({ ...prev, [key]: value }));
+  }
+
+  /*
+   * Prices are read-only until asked for. A screen of 28 open inputs invites
+   * stray keystrokes and makes the catalogue hard to scan; a figure with an Edit
+   * button keeps the list readable and makes each change deliberate.
+   */
+  function startEdit(card: Card) {
+    setEditing(card.key);
+    setEditValue(card.item.price);
+  }
+
+  function commitEdit() {
+    if (editing) setPrice(editing, editValue);
+    setEditing(null);
   }
 
   function labelOf(groupId: string) {
@@ -356,6 +375,7 @@ export function PriceEditor({
               onClick={() => {
                 setGroupId(entry.id);
                 setVendorId(entry.vendors?.[0]?.id);
+                setEditing(null);
               }}
               className={PILL(active)}
             >
@@ -525,12 +545,52 @@ export function PriceEditor({
                   )}
 
                   <div className="mt-auto pt-4">
-                    <RupiahInput
-                      label="Harga jual"
-                      value={card.item.price}
-                      onChange={(value) => setPrice(card.key, value)}
-                      className={cn(changed && "border-brand")}
-                    />
+                    {editing === card.key ? (
+                      <div className="flex items-end gap-2">
+                        <RupiahInput
+                          label="Harga jual"
+                          value={editValue}
+                          onChange={setEditValue}
+                          autoFocus
+                          className="flex-1"
+                          onKeyDown={(event) => {
+                            if (event.key === "Enter") {
+                              event.preventDefault();
+                              commitEdit();
+                            } else if (event.key === "Escape") {
+                              event.preventDefault();
+                              setEditing(null);
+                            }
+                          }}
+                        />
+                        <Button variant="secondary" className="min-h-11 px-3.5" onClick={commitEdit}>
+                          Selesai
+                        </Button>
+                      </div>
+                    ) : (
+                      <>
+                        <p className="text-[11px] font-semibold text-muted">Harga jual</p>
+                        <div className="mt-1 flex items-center justify-between gap-2">
+                          <span
+                            className={cn(
+                              "text-lg font-extrabold tabular-nums",
+                              changed ? "text-brand" : "text-ink",
+                            )}
+                          >
+                            {formatRupiah(card.item.price)}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => startEdit(card)}
+                            aria-label={`Edit harga ${card.item.name}`}
+                            className="inline-flex min-h-9 cursor-pointer items-center gap-1.5 rounded-pill border border-line px-3 text-[11px] font-bold text-brand transition-colors hover:border-brand hover:bg-soft"
+                          >
+                            <PencilIcon />
+                            Edit
+                          </button>
+                        </div>
+                      </>
+                    )}
                     <div className="mt-2.5 flex items-center justify-between gap-2">
                       <span className="text-[11px] text-muted tabular-nums">
                         {card.shipped ? `bawaan ${formatRupiah(baseline)}` : "produk tambahan"}
