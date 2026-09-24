@@ -7,6 +7,7 @@ import { cn } from "@/lib/cn";
 import {
   ChatIcon,
   ChevronRightIcon,
+  ClipboardIcon,
   HomeIcon,
   ReceiptIcon,
   TagIcon,
@@ -25,6 +26,10 @@ export const ADMIN_NAV: { group: string; items: { href: string; label: string; i
       { href: "/admin", label: "Ringkasan", icon: HomeIcon },
       { href: "/admin/produk", label: "Harga produk", icon: TagIcon },
     ],
+  },
+  {
+    group: "Pesanan",
+    items: [{ href: "/admin/pesanan", label: "Kelola pesanan", icon: ClipboardIcon }],
   },
   {
     group: "Pengaturan",

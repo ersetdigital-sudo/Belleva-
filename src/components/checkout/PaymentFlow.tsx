@@ -6,6 +6,7 @@ import { useSearchParams } from "next/navigation";
 import { useReducedMotion } from "motion/react";
 import { QRCodeSVG } from "qrcode.react";
 
+import { recordOrderAction, settleOrderAction } from "@/app/actions/orders";
 import { groupStroomCode, inquireBill, makeStroomCode } from "@/lib/billing";
 import { resolvePostpaid, resolvePrepaid } from "@/lib/catalog";
 import { optimisedUrl } from "@/lib/cloudinary-url";
@@ -210,12 +211,14 @@ export function PaymentFlow({
 
   /**
    * Mirror the order into this browser's history as soon as it is created, then
-   * again when it settles. That store is what the "Cek Transaksi" page reads —
-   * the simulation has no server-side record to query.
+   * again when it settles, and record it on the server so the merchant can
+   * actually see and manage it in /admin/pesanan. The server action re-resolves
+   * the price from the catalogue, so nothing here is trusted with an amount.
    */
   useEffect(() => {
     if (!order) return;
     if (status !== "awaiting" && status !== "done") return;
+
     saveTransaction({
       reference,
       customer,
@@ -225,6 +228,20 @@ export function PaymentFlow({
       total,
       status: status === "done" ? "berhasil" : "menunggu",
     });
+
+    if (status === "done") {
+      void settleOrderAction(reference);
+    } else {
+      void recordOrderAction({
+        reference,
+        groupId: order.group.id,
+        vendorId: order.vendor?.id,
+        itemId: order.item?.id,
+        choiceId: order.choice?.id,
+        customer,
+        method: paymentLabel,
+      });
+    }
   }, [order, status, reference, customer, paymentLabel, total]);
 
   function startProcessing() {

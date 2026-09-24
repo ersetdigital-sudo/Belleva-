@@ -5,6 +5,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
 import { destroyImage, createUploadSignature } from "./cloudinary";
+import { ORDER_STATUSES } from "@/lib/orders";
 import { defaultPrices, type PriceOverrides } from "@/lib/products";
 import {
   SESSION_COOKIE,
@@ -167,6 +168,19 @@ export async function saveProductPricesAction(
   } catch (error) {
     return { ok: false, message: error instanceof Error ? error.message : "Gagal menyimpan." };
   }
+}
+
+/** Moves an order to another status from the order list. */
+export async function updateOrderStatusAction(formData: FormData): Promise<void> {
+  await requireAdmin();
+
+  const id = String(formData.get("id") ?? "");
+  const status = String(formData.get("status") ?? "");
+  if (!id || !ORDER_STATUSES.some((entry) => entry.value === status)) return;
+
+  const supabase = createAdminClient();
+  await supabase.from("orders").update({ status }).eq("id", id);
+  revalidatePath("/admin/pesanan");
 }
 
 /** Asks Cloudinary for the signature one image upload needs. */

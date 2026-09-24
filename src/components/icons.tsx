@@ -546,6 +546,17 @@ export function ChevronDownIcon({ size = 16, className }: { size?: number; class
   );
 }
 
+/** Clipboard list — the "Kelola pesanan" section. */
+export function ClipboardIcon({ size = 22, className }: { size?: number; className?: string }) {
+  return (
+    <svg {...APP_ICON} width={size} height={size} className={className}>
+      <rect x="5.5" y="4.6" width="13" height="16.4" rx="2.5" />
+      <path d="M9.3 4.6v-.8a1.3 1.3 0 0 1 1.3-1.3h2.8a1.3 1.3 0 0 1 1.3 1.3v.8" />
+      <path d="M9.3 11h5.4M9.3 14.6h3.5" />
+    </svg>
+  );
+}
+
 /* --------------------- Support and legal link icons ---------------------- */
 
 export function ChatIcon({ size = 18, className }: { size?: number; className?: string }) {
