@@ -4,84 +4,187 @@ import { useState, useTransition } from "react";
 import Link from "next/link";
 
 import { lookupOrdersAction } from "@/app/actions/orders";
+import { categoryGradient } from "@/data/categories";
 import { cn } from "@/lib/cn";
 import { formatDateTime, formatRupiah } from "@/lib/format";
-import type { LookupScope, Order, OrderStatus } from "@/lib/orders";
+import {
+  ORDER_STATUS_STYLE,
+  orderStatusLabel,
+  type LookupScope,
+  type Order,
+  type OrderStatus,
+} from "@/lib/orders";
 
-import { SearchIcon } from "@/components/icons";
+import {
+  AlertIcon,
+  CategoryIcon,
+  CheckIcon,
+  ClockIcon,
+  CloseIcon,
+  CopyIcon,
+  ReceiptIcon,
+  SearchIcon,
+} from "@/components/icons";
+import type { CategoryIconId } from "@/types";
 
-const STATUS_LABEL: Record<OrderStatus, string> = {
-  menunggu: "Menunggu pembayaran",
-  berhasil: "Berhasil",
-  gagal: "Gagal",
+/**
+ * What the status means for the person reading it, in one line.
+ *
+ * The card reports a status; this says what to do about it, which is the part a
+ * customer actually needs — especially when money has already moved.
+ */
+const STATUS_NOTE: Record<OrderStatus, string> = {
+  menunggu:
+    "Selesaikan pembayaran dalam 24 jam. Kalau sudah dibayar tapi statusnya masih ini, hubungi dukungan dengan nomor referensi di samping.",
+  berhasil: "Pembayaran diterima dan pesanannya sudah diproses.",
+  gagal: "Pembayaran tidak selesai, jadi pesanannya hangus. Baris ini hanya catatan.",
 };
 
-const STATUS_STYLE: Record<OrderStatus, string> = {
-  menunggu: "bg-warn/15 text-warn",
-  berhasil: "bg-success-soft text-success",
-  gagal: "bg-danger-soft text-danger",
-};
-
-function StatusPill({ status }: { status: OrderStatus }) {
+function StatusChip({ status }: { status: OrderStatus }) {
+  const Icon = status === "berhasil" ? CheckIcon : status === "gagal" ? CloseIcon : ClockIcon;
   return (
     <span
       className={cn(
-        "shrink-0 rounded-pill px-3 py-1 text-[11px] leading-none font-bold",
-        STATUS_STYLE[status],
+        "inline-flex shrink-0 items-center gap-1.5 rounded-pill px-2.5 py-1 text-[11px] leading-none font-bold whitespace-nowrap",
+        ORDER_STATUS_STYLE[status],
       )}
     >
-      {STATUS_LABEL[status]}
+      {status === "berhasil" ? (
+        <CheckIcon size={11} stroke="currentColor" strokeWidth={3.4} />
+      ) : (
+        <Icon size={12} />
+      )}
+      {orderStatusLabel(status)}
     </span>
   );
 }
 
-function DetailRow({ label, value }: { label: string; value: string }) {
+function Detail({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex items-start justify-between gap-4">
-      <dt className="text-muted">{label}</dt>
-      <dd className="text-right font-semibold">{value}</dd>
+    <div className="min-w-0">
+      <dt className="text-[11px] font-bold tracking-wider text-muted uppercase">{label}</dt>
+      <dd className="mt-1 truncate text-sm font-semibold text-ink">{value}</dd>
     </div>
   );
 }
 
+/**
+ * One order, laid out like a receipt: who and what it was at the top, the total
+ * as the figure worth reading, and the reference details underneath.
+ *
+ * The reference gets a copy button because the first thing anyone does with a
+ * reference code is paste it into a complaint.
+ */
 function TransactionCard({ entry }: { entry: Order }) {
+  const [copied, setCopied] = useState<"ok" | "failed" | null>(null);
+
+  async function copyReference() {
+    try {
+      await navigator.clipboard.writeText(entry.reference);
+      setCopied("ok");
+    } catch {
+      setCopied("failed");
+    }
+    window.setTimeout(() => setCopied(null), 2200);
+  }
+
   return (
-    <li className="card p-5">
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <p className="truncate font-bold">{entry.productName}</p>
-          <p className="mt-0.5 text-xs text-muted">
+    <li className="card overflow-hidden">
+      <div className="flex items-start gap-3.5 p-5">
+        {GROUP_ICON[entry.groupLabel] ? (
+          <span
+            aria-hidden="true"
+            className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl"
+            style={{ background: categoryGradient(GROUP_ICON[entry.groupLabel]) }}
+          >
+            <CategoryIcon id={GROUP_ICON[entry.groupLabel]} />
+          </span>
+        ) : (
+          <span
+            aria-hidden="true"
+            className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-soft text-muted"
+          >
+            <ReceiptIcon size={20} />
+          </span>
+        )}
+
+        <div className="min-w-0 flex-1">
+          <p className="truncate font-bold text-ink">{entry.productName}</p>
+          <p className="mt-0.5 truncate text-xs text-muted">
             {entry.vendorLabel ? `${entry.vendorLabel} · ` : ""}
             {formatDateTime(new Date(entry.createdAt).getTime())}
           </p>
         </div>
-        <StatusPill status={entry.status} />
+
+        <StatusChip status={entry.status} />
       </div>
 
-      <dl className="mt-4 space-y-2 border-t border-line-2 pt-4 text-sm">
-        <DetailRow label="Nomor tujuan" value={entry.customer} />
-        <DetailRow label="Jenis" value={entry.groupLabel} />
-        <DetailRow label="Metode" value={entry.method} />
-        <DetailRow label="No. referensi" value={entry.reference} />
-        <div className="flex items-center justify-between gap-4 border-t border-line-2 pt-2">
-          <dt className="font-semibold">Total</dt>
-          <dd className="font-extrabold text-brand">{formatRupiah(entry.total)}</dd>
+      <div className="border-t border-line-2 px-5 py-4">
+        <dl className="grid gap-x-4 gap-y-3.5 sm:grid-cols-2">
+          <Detail label="Nomor tujuan" value={entry.customer} />
+          <Detail label="Jenis" value={entry.groupLabel} />
+          <Detail label="Metode bayar" value={entry.method} />
+        </dl>
+
+        <div className="mt-4 flex items-center justify-between gap-3 rounded-xl bg-soft px-3.5 py-2.5">
+          <span className="min-w-0">
+            <span className="block text-[11px] font-bold tracking-wider text-muted uppercase">
+              No. referensi
+            </span>
+            <span className="mt-0.5 block truncate font-mono text-sm font-bold text-ink">
+              {entry.reference}
+            </span>
+          </span>
+          <button
+            type="button"
+            onClick={copyReference}
+            className="inline-flex min-h-11 shrink-0 cursor-pointer items-center gap-1.5 rounded-pill border border-line bg-white px-3.5 text-xs font-bold text-brand transition-colors hover:border-brand"
+          >
+            <CopyIcon />
+            {copied === "ok" ? "Tersalin" : "Salin"}
+          </button>
+          <span aria-live="polite" className="sr-only">
+            {copied === "ok"
+              ? "Nomor referensi tersalin."
+              : copied === "failed"
+                ? "Gagal menyalin, salin manual saja."
+                : ""}
+          </span>
         </div>
-      </dl>
+      </div>
+
+      <div className="flex flex-wrap items-end justify-between gap-3 border-t border-line-2 bg-white px-5 py-4">
+        <div>
+          <p className="text-[11px] font-bold tracking-wider text-muted uppercase">Total bayar</p>
+          <p className="mt-1 text-2xl leading-none font-extrabold text-brand tabular-nums">
+            {formatRupiah(entry.total)}
+          </p>
+        </div>
+        <p className="max-w-[18rem] text-[11px] leading-relaxed text-muted sm:text-right">
+          {STATUS_NOTE[entry.status]}
+        </p>
+      </div>
     </li>
   );
 }
 
-/**
- * Looks up a transaction on the server, by reference code or customer number.
- *
- * This used to read a history kept in the visitor's own browser, which meant an
- * order placed on a phone was invisible on a laptop. It now queries the same
- * `orders` rows the admin panel manages, so a customer can check from anywhere.
- *
- * A lookup is a network round trip, so it runs on submit rather than on every
- * keystroke.
+/*
+ * An order only carries the group's label, so the tile's icon is matched back by
+ * name. Categories created in the admin are not in this map — they get a neutral
+ * receipt tile rather than an icon borrowed from a different category.
  */
+const GROUP_ICON: Record<string, CategoryIconId> = {
+  Pulsa: "pulsa",
+  "Paket Data": "paket-data",
+  "Token Listrik": "pln",
+  "Tagihan Listrik": "pln",
+  "E-Money": "e-money",
+  PDAM: "pdam",
+  BPJS: "bpjs",
+  Internet: "internet",
+  Angsuran: "multifinance",
+};
+
 export function TransactionLookup() {
   const [query, setQuery] = useState("");
   const [submitted, setSubmitted] = useState("");
@@ -112,92 +215,114 @@ export function TransactionLookup() {
   const scope = result?.scope ?? "none";
 
   return (
-    <div className="mx-auto w-full max-w-3xl px-5 py-12">
-      <Link href="/" className="text-sm font-semibold text-muted transition-colors hover:text-brand">
+    <div className="mx-auto w-full max-w-3xl px-5 py-10 sm:py-14">
+      <Link
+        href="/"
+        className="inline-flex min-h-11 items-center text-sm font-semibold text-muted transition-colors hover:text-brand"
+      >
         ← Kembali ke beranda
       </Link>
 
-      <h1 className="h-display mt-5 text-2xl font-extrabold sm:text-3xl">Cek Transaksi</h1>
-      <p className="mt-1.5 text-sm text-muted">
-        Masukkan nomor HP atau nomor referensi untuk melihat status transaksi.
+      <h1 className="h-display mt-4 text-3xl font-extrabold sm:text-4xl">Cek Transaksi</h1>
+      <p className="mt-2 max-w-xl text-sm text-muted">
+        Masukkan nomor HP / ID pelanggan atau nomor referensi untuk melihat status transaksi.
+        Riwayatnya tersimpan di server, jadi bisa dicek dari perangkat mana pun.
       </p>
 
-      <form className="mt-6" onSubmit={search}>
-        <div className="flex flex-col gap-3 sm:flex-row">
-          <div className="flex flex-1 items-center gap-2.5 rounded-2xl border border-line bg-white px-4 transition-colors focus-within:border-brand">
-            <SearchIcon className="shrink-0 text-muted" />
-            <input
-              type="search"
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder="Contoh: 81234567890 atau BLV12345678"
-              aria-label="Nomor HP atau nomor referensi"
-              className="w-full min-w-0 bg-transparent py-3.5 text-sm font-semibold text-ink outline-none placeholder:font-normal placeholder:text-muted"
-            />
-          </div>
-          <button
-            type="submit"
-            disabled={pending}
-            className="blue-grad inline-flex min-h-12 items-center justify-center rounded-2xl px-7 text-sm font-bold text-white shadow-soft disabled:opacity-70"
-          >
-            {pending ? "Mencari…" : "Cek"}
-          </button>
+      <form
+        onSubmit={search}
+        className="card mt-6 flex flex-col gap-3 p-3 sm:flex-row sm:items-center"
+      >
+        <div className="flex flex-1 items-center gap-2.5 rounded-xl bg-soft px-3.5 focus-within:ring-2 focus-within:ring-brand/30">
+          <SearchIcon size={18} className="shrink-0 text-muted" />
+          <input
+            type="search"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder="81234567890 atau BLV12345678"
+            aria-label="Nomor HP atau nomor referensi"
+            className="w-full min-w-0 bg-transparent py-3 text-sm font-semibold text-ink outline-none placeholder:font-normal placeholder:text-muted"
+          />
         </div>
-        <p className="mt-2 text-xs text-muted">
-          Nomor HP bisa ditulis <span className="font-semibold">0812…</span>,{" "}
-          <span className="font-semibold">812…</span>, atau{" "}
-          <span className="font-semibold">+62 812…</span> — semuanya terbaca sama.
-        </p>
+        <button
+          type="submit"
+          disabled={pending}
+          className="blue-grad inline-flex min-h-12 cursor-pointer items-center justify-center rounded-xl px-8 text-sm font-bold text-white shadow-soft transition-opacity disabled:opacity-70"
+        >
+          {pending ? "Mencari…" : "Cek"}
+        </button>
       </form>
+
+      <p className="mt-2.5 px-1 text-xs text-muted">
+        Nomor HP bisa ditulis <span className="font-semibold text-ink">0812…</span>,{" "}
+        <span className="font-semibold text-ink">812…</span>, atau{" "}
+        <span className="font-semibold text-ink">+62 812…</span> — semuanya terbaca sama.
+      </p>
 
       <div className="mt-8" aria-live="polite">
         {result === null ? (
-          <div className="card p-6 text-center">
-            <p className="font-bold">Belum ada yang dicari</p>
-            <p className="mx-auto mt-2 max-w-md text-sm text-muted">
-              Masukkan nomor HP / ID pelanggan atau nomor referensi di atas, lalu tekan Cek.
-              Riwayat transaksi tersimpan di server Belleva, jadi bisa dicek dari perangkat mana
-              pun.
+          <div className="card p-8 text-center">
+            <span
+              aria-hidden="true"
+              className="mx-auto grid h-12 w-12 place-items-center rounded-2xl bg-soft text-brand"
+            >
+              <SearchIcon size={22} />
+            </span>
+            <p className="mt-4 font-bold">Belum ada yang dicari</p>
+            <p className="mx-auto mt-1.5 max-w-sm text-sm text-muted">
+              Isi nomor tujuan atau nomor referensi di atas, lalu tekan Cek.
             </p>
           </div>
         ) : error ? (
-          <div className="card p-6 text-center">
-            <p className="font-bold">Pencarian gagal</p>
-            <p className="mx-auto mt-2 max-w-md text-sm text-muted">
+          <div className="card p-8 text-center">
+            <span
+              aria-hidden="true"
+              className="mx-auto grid h-12 w-12 place-items-center rounded-2xl bg-danger-soft text-danger"
+            >
+              <AlertIcon size={20} />
+            </span>
+            <p className="mt-4 font-bold">Pencarian gagal</p>
+            <p className="mx-auto mt-1.5 max-w-sm text-sm text-muted">
               Koneksi ke server sedang bermasalah. Coba tekan Cek sekali lagi.
             </p>
           </div>
         ) : orders.length > 0 ? (
           <>
-            <h2 className="text-sm font-bold">
-              {scope === "reference"
-                ? "Transaksi dengan referensi ini"
-                : "Transaksi untuk nomor ini"}
-            </h2>
-            {orders.length > 1 && (
-              <p className="mt-1 text-xs text-muted">Menampilkan {orders.length} transaksi terbaru.</p>
-            )}
-            <ul className="mt-4 space-y-3">
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+              <h2 className="text-sm font-bold">
+                {scope === "reference"
+                  ? "Transaksi dengan referensi ini"
+                  : "Transaksi untuk nomor ini"}
+              </h2>
+              <span className="rounded-pill bg-soft px-2.5 py-1 text-[11px] font-bold text-muted">
+                {orders.length} transaksi
+              </span>
+            </div>
+            <ul className="mt-4 space-y-4">
               {orders.map((entry) => (
                 <TransactionCard key={entry.id} entry={entry} />
               ))}
             </ul>
           </>
         ) : (
-          <div className="card p-6 text-center">
-            <p className="font-bold">
-              {scope === "none"
-                ? "Nomor belum lengkap"
-                : `Tidak ada transaksi untuk “${submitted}”`}
+          <div className="card p-8 text-center">
+            <span
+              aria-hidden="true"
+              className="mx-auto grid h-12 w-12 place-items-center rounded-2xl bg-warn/15 text-warn"
+            >
+              <AlertIcon size={20} />
+            </span>
+            <p className="mt-4 font-bold">
+              {scope === "none" ? "Nomor belum lengkap" : `Tidak ada transaksi untuk “${submitted}”`}
             </p>
-            <p className="mx-auto mt-2 max-w-md text-sm text-muted">
+            <p className="mx-auto mt-1.5 max-w-md text-sm text-muted">
               {scope === "none"
                 ? "Masukkan nomor HP / ID pelanggan minimal 8 digit, atau nomor referensi lengkap yang diawali BLV."
-                : "Pastikan nomor HP / ID pelanggan atau nomor referensinya benar. Nomor referensi ada di halaman pembayaran dan di struk transaksimu."}
+                : "Pastikan nomornya benar. Nomor referensi ada di halaman pembayaran dan di struk transaksimu."}
             </p>
             <Link
               href="/#produk"
-              className="blue-grad mt-6 inline-flex min-h-12 items-center rounded-pill px-7 text-sm font-bold text-white"
+              className="blue-grad mt-6 inline-flex min-h-12 items-center rounded-xl px-7 text-sm font-bold text-white shadow-soft"
             >
               Mulai Transaksi
             </Link>
