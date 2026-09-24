@@ -1,0 +1,78 @@
+import type { MobileNavItem, MobileProduct, MobilePromo } from "@/types";
+
+import { categoryGradient } from "./categories";
+import { productGroups } from "./products";
+
+/**
+ * Promo slides for the mobile app home. Every claim is lifted from copy the
+ * site already makes (the cashback banner, the "Proses Instan" feature, the
+ * catalogue range) — no new offer is invented here.
+ */
+export const mobilePromos: MobilePromo[] = [
+  {
+    id: "cashback",
+    title: "Cashback hingga 50%",
+    subtitle: "Untuk transaksi pilihan di Belleva",
+    cta: "Lihat Produk",
+    gradient:
+      "radial-gradient(120% 90% at 88% 8%, rgba(22,104,245,.20) 0%, rgba(22,104,245,0) 62%), linear-gradient(135deg,#eef4ff,#dbe8ff)",
+    href: "/#produk",
+  },
+  {
+    id: "instan",
+    title: "Pulsa & paket data instan",
+    subtitle: "Transaksi masuk dalam hitungan detik",
+    cta: "Isi Sekarang",
+    gradient:
+      "radial-gradient(120% 90% at 88% 8%, rgba(245,165,36,.24) 0%, rgba(245,165,36,0) 62%), linear-gradient(135deg,#fff6e6,#ffe9c4)",
+    href: "/#produk",
+  },
+  {
+    id: "tagihan",
+    title: "Bayar tagihan bulanan",
+    subtitle: "Listrik, PDAM, BPJS, internet dalam satu aplikasi",
+    cta: "Cek Tagihan",
+    gradient:
+      "radial-gradient(120% 90% at 88% 8%, rgba(23,164,95,.20) 0%, rgba(23,164,95,0) 62%), linear-gradient(135deg,#eefaf3,#d6f2e4)",
+    href: "/#produk",
+  },
+];
+
+/**
+ * Bottom tab-bar slots. The last one takes the wireframe's "Account" position
+ * without being an account section — it is the sign-up CTA, which the desktop
+ * header carries but the mobile app bar does not.
+ */
+export const mobileNav: MobileNavItem[] = [
+  { id: "beranda", label: "Beranda", href: "/" },
+  { id: "produk", label: "Produk", href: "/#produk" },
+  { id: "promo", label: "Promo", href: "/#promo" },
+  { id: "daftar", label: "Daftar", href: "/#daftar" },
+];
+
+const prepaidGroups = productGroups.filter((group) => group.flow === "prepaid");
+
+function itemsOf(group: (typeof productGroups)[number]) {
+  return group.items ?? group.vendors?.[0]?.items ?? [];
+}
+
+/**
+ * Every prepaid nominal, flattened and tagged with its group. The first vendor
+ * of each group stands in for the group so the list stays readable — this is
+ * what the mobile search filters.
+ */
+export const mobileCatalogue: MobileProduct[] = prepaidGroups.flatMap((group) =>
+  itemsOf(group).map((item) => ({
+    key: `${group.id}-${item.id}`,
+    groupId: group.id,
+    groupLabel: group.label,
+    icon: group.icon,
+    gradient: categoryGradient(group.icon),
+    item,
+  })),
+);
+
+/** Paket data tiles read best in the two-column grid: kuota, masa aktif, harga. */
+export const mobileRecommendations: MobileProduct[] = mobileCatalogue
+  .filter((entry) => entry.groupId === "data")
+  .slice(0, 4);

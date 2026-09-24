@@ -16,7 +16,8 @@ export function Footer() {
   const year = new Date().getFullYear();
 
   return (
-    <footer className="bg-ink text-white/70">
+    // The mobile app home floats a fixed tab bar over the bottom of the page.
+    <footer className="bg-ink pb-20 text-white/70 lg:pb-0">
       <div className="mx-auto grid max-w-6xl gap-8 px-5 py-12 text-sm sm:grid-cols-2 lg:grid-cols-4">
         <div>
           <Logo variant="light" />

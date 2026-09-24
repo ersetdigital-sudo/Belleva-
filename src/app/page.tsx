@@ -4,6 +4,7 @@ import { CtaBanner } from "@/components/home/CtaBanner";
 import { Faq } from "@/components/home/Faq";
 import { Features } from "@/components/home/Features";
 import { Hero } from "@/components/home/Hero";
+import { MobileHome } from "@/components/home/mobile/mobile-home";
 import { ProductSection } from "@/components/home/ProductSection";
 import { ProductTabProvider } from "@/components/home/product-tab-context";
 import { PromoBanner } from "@/components/home/PromoBanner";
@@ -19,8 +20,15 @@ export default function HomePage() {
     <>
       <StructuredData />
       <ProductTabProvider>
-        <Hero />
-        <PromoBanner />
+        {/*
+          Phones get the app-style home; the landing hero and promo banner stay
+          desktop-only so exactly one composition is laid out at any width.
+        */}
+        <MobileHome />
+        <div className="hidden lg:block">
+          <Hero />
+          <PromoBanner />
+        </div>
         <ProductSection />
       </ProductTabProvider>
       <Features />

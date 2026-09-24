@@ -127,7 +127,7 @@ const categoryIcons: Record<CategoryIconId, React.ReactNode> = {
 };
 
 /** `paket-data` is the only category icon that inherits its colour from CSS. */
-export function CategoryIcon({ id }: { id: CategoryIconId }) {
+export function CategoryIcon({ id, className }: { id: CategoryIconId; className?: string }) {
   return (
     <svg
       viewBox="0 0 32 32"
@@ -135,6 +135,7 @@ export function CategoryIcon({ id }: { id: CategoryIconId }) {
       strokeLinecap="round"
       strokeLinejoin="round"
       stroke={id === "paket-data" ? "#1668f5" : undefined}
+      className={className}
       aria-hidden="true"
     >
       {categoryIcons[id]}
@@ -443,6 +444,95 @@ export function ShieldCheckIcon() {
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="1.8" aria-hidden="true">
       <path d="M12 3l7 3v6c0 4.4-3 8.2-7 9-4-.8-7-4.6-7-9V6l7-3Z" />
       <path d="M9 12l2.2 2.2L15.5 10" />
+    </svg>
+  );
+}
+
+/* --------------------------- Mobile app home ----------------------------- */
+
+/** Shared geometry so every new icon matches the existing stroke vocabulary. */
+const APP_ICON = {
+  viewBox: "0 0 24 24",
+  fill: "none",
+  stroke: "currentColor",
+  strokeWidth: 2,
+  strokeLinecap: "round" as const,
+  strokeLinejoin: "round" as const,
+  "aria-hidden": true,
+};
+
+export function SearchIcon({ size = 20, className }: { size?: number; className?: string }) {
+  return (
+    <svg {...APP_ICON} width={size} height={size} className={className}>
+      <circle cx="11" cy="11" r="7" />
+      <path d="m16.4 16.4 4.1 4.1" />
+    </svg>
+  );
+}
+
+export function HelpIcon({ size = 22, className }: { size?: number; className?: string }) {
+  return (
+    <svg {...APP_ICON} width={size} height={size} className={className}>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M9.7 9.5a2.5 2.5 0 0 1 4.8.9c0 1.7-2.5 2-2.5 3.4" />
+      <circle cx="12" cy="17.4" r="1.1" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+
+export function ChevronRightIcon({ size = 16, className }: { size?: number; className?: string }) {
+  return (
+    <svg {...APP_ICON} width={size} height={size} className={className}>
+      <path d="m9.5 5.5 6.5 6.5-6.5 6.5" />
+    </svg>
+  );
+}
+
+export function HomeIcon({ size = 22, className }: { size?: number; className?: string }) {
+  return (
+    <svg {...APP_ICON} width={size} height={size} className={className}>
+      <path d="M4 10.6 12 4l8 6.6" />
+      <path d="M6.3 9.6V20h11.4V9.6" />
+      <path d="M10 20v-5.3h4V20" />
+    </svg>
+  );
+}
+
+export function GridIcon({ size = 22, className }: { size?: number; className?: string }) {
+  return (
+    <svg {...APP_ICON} width={size} height={size} className={className}>
+      <rect x="3.6" y="3.6" width="7" height="7" rx="2" />
+      <rect x="13.4" y="3.6" width="7" height="7" rx="2" />
+      <rect x="3.6" y="13.4" width="7" height="7" rx="2" />
+      <rect x="13.4" y="13.4" width="7" height="7" rx="2" />
+    </svg>
+  );
+}
+
+export function TagIcon({ size = 18, className }: { size?: number; className?: string }) {
+  return (
+    <svg {...APP_ICON} width={size} height={size} className={className}>
+      <path d="M3.8 11.3V5.1a1.3 1.3 0 0 1 1.3-1.3h6.2a1.3 1.3 0 0 1 .9.4l7.8 7.8a1.3 1.3 0 0 1 0 1.8l-6.2 6.2a1.3 1.3 0 0 1-1.8 0l-7.8-7.8a1.3 1.3 0 0 1-.4-.9Z" />
+      <circle cx="8.1" cy="8.1" r="1.5" />
+    </svg>
+  );
+}
+
+/** The centre "Top Up" action on the mobile tab bar. */
+export function BoltIcon({ size = 24, className }: { size?: number; className?: string }) {
+  return (
+    <svg {...APP_ICON} width={size} height={size} className={className}>
+      <path d="M13.2 2.6 6 13.1h4.9L10.6 21.4l7.3-10.5h-4.9l.2-8.3Z" />
+    </svg>
+  );
+}
+
+export function UserPlusIcon({ size = 22, className }: { size?: number; className?: string }) {
+  return (
+    <svg {...APP_ICON} width={size} height={size} className={className}>
+      <circle cx="9.8" cy="8" r="3.6" />
+      <path d="M3.4 20c0-3.6 2.9-6.1 6.4-6.1s6.4 2.5 6.4 6.1" />
+      <path d="M18.6 7.4v5.2M16 10h5.2" />
     </svg>
   );
 }

@@ -203,3 +203,37 @@ export interface StoreLink {
   label: string;
   href: string;
 }
+
+/** A slide in the mobile app-home promo carousel. */
+export interface MobilePromo {
+  id: string;
+  title: string;
+  subtitle: string;
+  cta: string;
+  /** Inline CSS gradient — same convention as `Category.gradient`. */
+  gradient: string;
+  href: string;
+}
+
+/** Bottom tab-bar slots on the mobile app home. */
+export type MobileNavId = "beranda" | "produk" | "promo" | "daftar";
+
+export interface MobileNavItem {
+  id: MobileNavId;
+  label: string;
+  href: string;
+}
+
+/**
+ * A catalogue item flattened for the mobile home, carrying the group it came
+ * from so a tap can open the right catalogue tab.
+ */
+export interface MobileProduct {
+  key: string;
+  groupId: ProductGroupId;
+  groupLabel: string;
+  icon: CategoryIconId;
+  /** Inline CSS gradient from the category it belongs to. */
+  gradient: string;
+  item: ProductItem;
+}

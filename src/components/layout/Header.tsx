@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { AnimatePresence, motion } from "motion/react";
 
 import { cn } from "@/lib/cn";
@@ -14,12 +15,25 @@ import { CloseIcon, MenuIcon } from "@/components/icons";
 
 export function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const pathname = usePathname();
 
   const sectionIds = useMemo(() => navLinks.map((link) => sectionIdOf(link.href)), []);
   const activeSection = useActiveSection(sectionIds);
 
+  /*
+   * The home page replaces this header with the app bar and bottom tab bar on
+   * phones, so the header only renders from `lg` up there. Every other route
+   * (e.g. /bayar) keeps the normal mobile header.
+   */
+  const isAppHome = pathname === "/";
+
   return (
-    <header className="sticky top-0 z-50 border-b border-line bg-white/90 backdrop-blur">
+    <header
+      className={cn(
+        "sticky top-0 z-50 border-b border-line bg-white/90 backdrop-blur",
+        isAppHome && "hidden lg:block",
+      )}
+    >
       <div className="mx-auto flex h-16 max-w-6xl items-center gap-8 px-5">
         <Link href="/" className="block shrink-0" aria-label="Belleva — kembali ke beranda">
           <Logo priority />
