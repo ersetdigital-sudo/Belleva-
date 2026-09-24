@@ -5,7 +5,7 @@ import { ArrowRightIcon, ChatIcon, HelpIcon, ReceiptIcon } from "@/components/ic
 import { getContacts } from "@/lib/settings";
 
 export const metadata: Metadata = {
-  title: "Hubungi Kami — Belleva",
+  title: "Hubungi Kami",
   description:
     "Hubungi tim Belleva lewat WhatsApp atau email. Untuk hal yang bisa diselesaikan sendiri, ada Pusat Bantuan dan Cek Transaksi.",
 };
