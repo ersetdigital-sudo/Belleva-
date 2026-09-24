@@ -182,7 +182,14 @@ export function PaymentFlow({
   const [channelId, setChannelId] = useState("bca");
   const [status, setStatus] = useState<Status>("form");
   const [payment, setPayment] = useState<PaymentRef | null>(null);
-  const [reference, setReference] = useState(makeReference);
+  /*
+   * A resumed order keeps its own reference. /cek-transaksi links an unpaid order
+   * back here with the original one, so paying from there settles that same order
+   * instead of leaving a second, abandoned row behind.
+   */
+  const resumedReference = params.get("ref");
+  const validResumed = resumedReference && /^BLV\d{6,10}$/.test(resumedReference);
+  const [reference, setReference] = useState(() => (validResumed ? resumedReference : makeReference()));
   const timerRef = useRef<number | null>(null);
 
   useEffect(
@@ -270,7 +277,7 @@ export function PaymentFlow({
       timerRef.current = null;
     }
     setPayment(null);
-    setReference(makeReference());
+    setReference(validResumed ? resumedReference : makeReference());
     setStatus("form");
   }
 

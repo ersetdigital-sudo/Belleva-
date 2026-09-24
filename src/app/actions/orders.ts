@@ -70,6 +70,15 @@ export async function recordOrderAction(input: {
         method: input.method,
         total,
         status: "menunggu",
+        /*
+         * The catalogue ids are stored alongside the label so an unpaid order can
+         * be walked back into the checkout it came from — /cek-transaksi links a
+         * "menunggu" order straight back to its payment page with these.
+         */
+        group_id: order.group.id,
+        vendor_id: order.vendor?.id ?? null,
+        item_id: input.itemId ?? null,
+        choice_id: input.choiceId ?? null,
       },
       { onConflict: "reference", ignoreDuplicates: true },
     );

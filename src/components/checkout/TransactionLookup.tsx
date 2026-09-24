@@ -17,6 +17,7 @@ import {
 
 import {
   AlertIcon,
+  ArrowRightIcon,
   CategoryIcon,
   CheckIcon,
   ClockIcon,
@@ -39,6 +40,30 @@ const STATUS_NOTE: Record<OrderStatus, string> = {
   berhasil: "Pembayaran diterima dan pesanannya sudah diproses.",
   gagal: "Pembayaran tidak selesai, jadi pesanannya hangus. Baris ini hanya catatan.",
 };
+
+/**
+ * Rebuilds the checkout link for an order that was never paid.
+ *
+ * Orders saved before the catalogue ids were stored do not have them, and those
+ * rows get no button rather than a link to a page that cannot resolve them.
+ */
+function canResume(order: Order): boolean {
+  return (
+    order.status === "menunggu" && Boolean(order.groupId) && Boolean(order.itemId ?? order.choiceId)
+  );
+}
+
+function resumeHref(order: Order): string {
+  const params = new URLSearchParams({
+    group: order.groupId ?? "",
+    customer: order.customer,
+    ref: order.reference,
+  });
+  if (order.vendorId) params.set("vendor", order.vendorId);
+  if (order.itemId) params.set("item", order.itemId);
+  if (order.choiceId) params.set("choice", order.choiceId);
+  return `/bayar?${params.toString()}`;
+}
 
 function StatusChip({ status }: { status: OrderStatus }) {
   const Icon = status === "berhasil" ? CheckIcon : status === "gagal" ? CloseIcon : ClockIcon;
@@ -153,16 +178,28 @@ function TransactionCard({ entry }: { entry: Order }) {
         </div>
       </div>
 
-      <div className="flex flex-wrap items-end justify-between gap-3 border-t border-line-2 bg-white px-5 py-4">
+      <div className="flex flex-wrap items-end justify-between gap-4 border-t border-line-2 bg-white px-5 py-4">
         <div>
           <p className="text-[11px] font-bold tracking-wider text-muted uppercase">Total bayar</p>
           <p className="mt-1 text-2xl leading-none font-extrabold text-brand tabular-nums">
             {formatRupiah(entry.total)}
           </p>
         </div>
-        <p className="max-w-[18rem] text-[11px] leading-relaxed text-muted sm:text-right">
-          {STATUS_NOTE[entry.status]}
-        </p>
+
+        <div className="flex w-full flex-col items-stretch gap-3 sm:w-auto sm:items-end">
+          {canResume(entry) && (
+            <Link
+              href={resumeHref(entry)}
+              className="blue-grad inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-xl px-5 text-sm font-bold text-white shadow-soft"
+            >
+              Lanjutkan pembayaran
+              <ArrowRightIcon />
+            </Link>
+          )}
+          <p className="max-w-[20rem] text-[11px] leading-relaxed text-muted sm:text-right">
+            {STATUS_NOTE[entry.status]}
+          </p>
+        </div>
       </div>
     </li>
   );

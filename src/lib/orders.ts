@@ -35,6 +35,11 @@ export interface Order {
   total: number;
   status: OrderStatus;
   createdAt: string;
+  /** Catalogue ids, so an unpaid order can be reopened in the checkout. */
+  groupId: string | null;
+  vendorId: string | null;
+  itemId: string | null;
+  choiceId: string | null;
 }
 
 interface OrderRow {
@@ -48,9 +53,14 @@ interface OrderRow {
   total: number;
   status: string;
   created_at: string;
+  group_id: string | null;
+  vendor_id: string | null;
+  item_id: string | null;
+  choice_id: string | null;
 }
 
-const SELECT = "id, reference, customer, product_name, group_label, vendor_label, method, total, status, created_at";
+const SELECT =
+  "id, reference, customer, product_name, group_label, vendor_label, method, total, status, created_at, group_id, vendor_id, item_id, choice_id";
 
 function toOrder(row: OrderRow): Order {
   return {
@@ -66,6 +76,10 @@ function toOrder(row: OrderRow): Order {
       ? row.status
       : "menunggu") as OrderStatus,
     createdAt: row.created_at,
+    groupId: row.group_id,
+    vendorId: row.vendor_id,
+    itemId: row.item_id,
+    choiceId: row.choice_id,
   };
 }
 

@@ -30,3 +30,12 @@ insert into public.orders (reference, customer, product_name, group_label, vendo
   ('BLV90000019', '081233445566', 'Pulsa 50.000',        'Pulsa',         'Telkomsel',       'QRIS',                                50950, 'gagal',    now() - interval '2 hours'),
   ('BLV90000020', '087755667788', 'PDAM Surabaya',       'PDAM',          'PDAM Surabaya',   'QRIS',                                128450, 'menunggu', now() - interval '25 minutes')
 on conflict (reference) do nothing;
+
+-- Id katalog untuk baris yang produknya jelas (pulsa Telkomsel memakai
+-- tsel-<indeks> dari src/data/products.ts). Tanpa ini kartu "menunggu" tidak
+-- punya tombol Lanjutkan pembayaran, karena halaman bayar tidak bisa
+-- menyelesaikan pesanan tanpa tahu item mana yang dibeli.
+update public.orders set group_id = 'pulsa', vendor_id = 'telkomsel', item_id = 'tsel-1', status = 'menunggu' where reference = 'BLV90000001';
+update public.orders set group_id = 'pulsa', vendor_id = 'telkomsel', item_id = 'tsel-7' where reference = 'BLV90000006';
+update public.orders set group_id = 'pulsa', vendor_id = 'telkomsel', item_id = 'tsel-5' where reference = 'BLV90000014';
+update public.orders set group_id = 'pulsa', vendor_id = 'telkomsel', item_id = 'tsel-6' where reference = 'BLV90000019';
