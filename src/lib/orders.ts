@@ -92,6 +92,8 @@ function toOrder(row: OrderRow): Order {
 export async function getOrders(options: { query?: string; status?: string; limit?: number } = {}) {
   const { query = "", status = "semua", limit = 100 } = options;
 
+  await sweepIfDue();
+
   try {
     const supabase = createAdminClient();
     let request = supabase
@@ -124,6 +126,55 @@ export async function getOrders(options: { query?: string; status?: string; limi
   }
 }
 
+/** How long a customer has to pay before the order is written off. */
+export const PAYMENT_WINDOW_HOURS = 24;
+
+/**
+ * Writes off unpaid orders that are past their payment window.
+ *
+ * The checkout tells the customer "setelah itu transaksi dibatalkan otomatis",
+ * and this is the thing that actually does it — without it that sentence is a
+ * promise nobody keeps and the pending list only ever grows.
+ *
+ * Expired orders are marked `gagal` rather than given a status of their own:
+ * from the shop's side, an abandoned order and a payment that did not complete
+ * both mean no money arrived.
+ */
+export async function expireStaleOrders(): Promise<number> {
+  try {
+    const supabase = createAdminClient();
+    const cutoff = new Date(Date.now() - PAYMENT_WINDOW_HOURS * 3_600_000).toISOString();
+
+    const { data, error } = await supabase
+      .from("orders")
+      .update({ status: "gagal" })
+      .eq("status", "menunggu")
+      .lt("created_at", cutoff)
+      .select("id");
+
+    if (error) return 0;
+    return data?.length ?? 0;
+  } catch {
+    return 0;
+  }
+}
+
+/**
+ * Runs the sweep at most once a minute per server process.
+ *
+ * It hangs off the read paths so nobody is ever shown a stale answer, but every
+ * read firing its own UPDATE would be wasteful. The cron route calls
+ * `expireStaleOrders` directly when it wants to be certain.
+ */
+const SWEEP_INTERVAL_MS = 60_000;
+let lastSweep = 0;
+
+async function sweepIfDue(): Promise<void> {
+  if (Date.now() - lastSweep < SWEEP_INTERVAL_MS) return;
+  lastSweep = Date.now();
+  await expireStaleOrders();
+}
+
 export type LookupScope = "reference" | "customer" | "none";
 
 /**
@@ -149,6 +200,9 @@ export async function lookupOrders(
   // reference's trailing digits can sit inside an unrelated phone number.
   const isReference = /[a-z]/i.test(term);
   const scope: LookupScope = isReference ? "reference" : "customer";
+
+  // The customer should never be told to pay an order that has already lapsed.
+  await sweepIfDue();
 
   try {
     const supabase = createAdminClient();

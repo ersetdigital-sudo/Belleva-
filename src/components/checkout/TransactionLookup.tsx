@@ -36,32 +36,42 @@ import type { CategoryIconId } from "@/types";
  */
 const STATUS_NOTE: Record<OrderStatus, string> = {
   menunggu:
-    "Selesaikan pembayaran dalam 24 jam. Kalau sudah dibayar tapi statusnya masih ini, hubungi dukungan dengan nomor referensi di samping.",
+    "Selesaikan pembayaran dalam 24 jam — lewat dari itu pesanannya dibatalkan otomatis. Kalau sudah dibayar tapi statusnya masih ini, hubungi dukungan dengan nomor referensi di samping.",
   berhasil: "Pembayaran diterima dan pesanannya sudah diproses.",
-  gagal: "Pembayaran tidak selesai, jadi pesanannya hangus. Baris ini hanya catatan.",
+  gagal:
+    "Pembayaran tidak selesai, atau pesanannya lewat batas 24 jam sehingga dibatalkan otomatis. Kalau kamu merasa sudah membayar, hubungi dukungan dengan nomor referensi di samping.",
 };
 
 /**
- * Rebuilds the checkout link for an order that was never paid.
+ * The one thing this order lets you do next.
  *
- * Orders saved before the catalogue ids were stored do not have them, and those
- * rows get no button rather than a link to a page that cannot resolve them.
+ * Every order that is not finished gets an action, so a card is never a dead
+ * end: an unpaid one can be continued from where it stopped, and anything else
+ * can be ordered again. Rows saved before the catalogue ids existed cannot be
+ * rebuilt into a checkout link, so those fall back to the catalogue instead of
+ * offering a button that would not resolve.
  */
-function canResume(order: Order): boolean {
-  return (
-    order.status === "menunggu" && Boolean(order.groupId) && Boolean(order.itemId ?? order.choiceId)
-  );
+function actionFor(order: Order): { label: string; href: string } | null {
+  const hasItems = Boolean(order.groupId) && Boolean(order.itemId ?? order.choiceId);
+  if (!hasItems && order.status === "berhasil") return null;
+  if (!hasItems) return { label: "Pesan ulang", href: "/#produk" };
+
+  if (order.status === "menunggu") {
+    return { label: "Lanjutkan pembayaran", href: checkoutHref(order, true) };
+  }
+  if (order.status === "gagal") {
+    // A fresh reference on purpose: the old order is closed, this is a new one.
+    return { label: "Pesan ulang", href: checkoutHref(order, false) };
+  }
+  return null;
 }
 
-function resumeHref(order: Order): string {
-  const params = new URLSearchParams({
-    group: order.groupId ?? "",
-    customer: order.customer,
-    ref: order.reference,
-  });
+function checkoutHref(order: Order, resume: boolean): string {
+  const params = new URLSearchParams({ group: order.groupId ?? "", customer: order.customer });
   if (order.vendorId) params.set("vendor", order.vendorId);
   if (order.itemId) params.set("item", order.itemId);
   if (order.choiceId) params.set("choice", order.choiceId);
+  if (resume) params.set("ref", order.reference);
   return `/bayar?${params.toString()}`;
 }
 
@@ -102,6 +112,7 @@ function Detail({ label, value }: { label: string; value: string }) {
  */
 function TransactionCard({ entry }: { entry: Order }) {
   const [copied, setCopied] = useState<"ok" | "failed" | null>(null);
+  const action = actionFor(entry);
 
   async function copyReference() {
     try {
@@ -187,12 +198,12 @@ function TransactionCard({ entry }: { entry: Order }) {
         </div>
 
         <div className="flex w-full flex-col items-stretch gap-3 sm:w-auto sm:items-end">
-          {canResume(entry) && (
+          {action && (
             <Link
-              href={resumeHref(entry)}
+              href={action.href}
               className="blue-grad inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-xl px-5 text-sm font-bold text-white shadow-soft"
             >
-              Lanjutkan pembayaran
+              {action.label}
               <ArrowRightIcon />
             </Link>
           )}
