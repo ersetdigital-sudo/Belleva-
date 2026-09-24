@@ -64,7 +64,7 @@ export function MobileRecommendations({ query }: MobileRecommendationsProps) {
           “kuota”, atau “token”.
         </p>
       ) : (
-        <ul className="mt-3 grid grid-cols-2 gap-3">
+        <ul className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3">
           {results.map((entry) => (
             <li key={entry.key}>
               <button

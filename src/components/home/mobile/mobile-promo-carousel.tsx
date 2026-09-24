@@ -5,6 +5,7 @@ import Link from "next/link";
 
 import { mobilePromos } from "@/data/mobile-home";
 import { cn } from "@/lib/cn";
+import type { MobilePromo } from "@/types";
 
 import { ArrowRightIcon } from "@/components/icons";
 
@@ -17,11 +18,35 @@ function stepOf(track: HTMLUListElement): number {
 }
 
 /**
- * Swipeable promo rail with synced pagination dots.
- *
  * The wireframe bleeds an illustration off the right edge of the card. Belleva
  * has no illustration asset, and the craft floor is "real illustration or none"
  * — so the slide carries the promo gradient alone instead of a stand-in graphic.
+ */
+function PromoCard({ promo, className }: { promo: MobilePromo; className?: string }) {
+  return (
+    <Link
+      href={promo.href}
+      className={cn("block rounded-hero p-5 transition-transform active:scale-[0.99]", className)}
+      style={{ background: promo.gradient }}
+    >
+      <span className="block max-w-[72%] sm:max-w-none">
+        <span className="h-display block text-xl font-extrabold text-ink">{promo.title}</span>
+        <span className="mt-1.5 block text-xs font-medium text-muted">{promo.subtitle}</span>
+      </span>
+      <span className="mt-4 inline-flex items-center gap-1.5 rounded-xl bg-brand px-4 py-2.5 text-xs font-bold text-white">
+        {promo.cta}
+        <ArrowRightIcon />
+      </span>
+    </Link>
+  );
+}
+
+/**
+ * Promo rail.
+ *
+ * Phones get the wireframe's swipeable carousel with synced dots. From `sm` up
+ * all three slides fit, so the rail and its dots become noise — the same promos
+ * lay out as a three-column row instead of stretching one card to full width.
  */
 export function MobilePromoCarousel() {
   const trackRef = useRef<HTMLUListElement>(null);
@@ -47,29 +72,24 @@ export function MobilePromoCarousel() {
       <ul
         ref={trackRef}
         onScroll={handleScroll}
-        className="no-scrollbar flex snap-x snap-mandatory gap-3 overflow-x-auto px-5"
+        className="no-scrollbar flex snap-x snap-mandatory gap-3 overflow-x-auto px-5 sm:hidden"
       >
         {mobilePromos.map((promo) => (
           <li key={promo.id} className="w-full shrink-0 snap-center">
-            <Link
-              href={promo.href}
-              className="block rounded-hero p-5 transition-transform active:scale-[0.99]"
-              style={{ background: promo.gradient }}
-            >
-              <span className="block max-w-[72%]">
-                <span className="h-display block text-xl font-extrabold text-ink">{promo.title}</span>
-                <span className="mt-1.5 block text-xs font-medium text-muted">{promo.subtitle}</span>
-              </span>
-              <span className="mt-4 inline-flex items-center gap-1.5 rounded-xl bg-brand px-4 py-2.5 text-xs font-bold text-white">
-                {promo.cta}
-                <ArrowRightIcon />
-              </span>
-            </Link>
+            <PromoCard promo={promo} />
           </li>
         ))}
       </ul>
 
-      <div className="mt-2 flex justify-center">
+      <ul className="hidden gap-3 px-5 sm:grid sm:grid-cols-3">
+        {mobilePromos.map((promo) => (
+          <li key={promo.id}>
+            <PromoCard promo={promo} className="h-full" />
+          </li>
+        ))}
+      </ul>
+
+      <div className="mt-2 flex justify-center sm:hidden">
         {mobilePromos.map((promo, index) => (
           <button
             key={promo.id}

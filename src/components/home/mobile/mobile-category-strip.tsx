@@ -21,7 +21,7 @@ export function MobileCategoryStrip() {
 
   return (
     <nav aria-label="Layanan" className="mt-6">
-      <ul className="grid grid-cols-4 gap-x-2 gap-y-3 px-5">
+      <ul className="grid grid-cols-4 gap-x-2 gap-y-3 px-5 sm:grid-cols-8">
         {categories.map((category) => {
           const selected = category.productGroup === activeGroup;
           return (

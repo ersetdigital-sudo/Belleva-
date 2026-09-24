@@ -110,23 +110,30 @@ export function MobileBottomNav() {
 
   return (
     <nav aria-label="Navigasi aplikasi" className="fixed inset-x-0 bottom-0 z-40 lg:hidden">
-      <div className="mx-auto flex max-w-lg items-end gap-1 rounded-t-3xl bg-white px-2 pt-2.5 pb-[max(0.625rem,env(safe-area-inset-bottom))] shadow-[0_-10px_30px_-18px_rgba(13,27,57,0.30)]">
-        {mobileNav.slice(0, 2).map((item) => (
-          <Slot key={item.id} item={item} active={active === item.id} onHome={handleHome} />
-        ))}
+      {/*
+        The bar itself spans the viewport so it lines up with the content above
+        it; only the items row is capped, so the tabs stay grouped on tablets
+        instead of drifting to the far edges.
+      */}
+      <div className="w-full rounded-t-3xl bg-white px-2 pt-2.5 pb-[max(0.625rem,env(safe-area-inset-bottom))] shadow-[0_-10px_30px_-18px_rgba(13,27,57,0.30)]">
+        <div className="mx-auto flex w-full max-w-2xl items-end gap-1">
+          {mobileNav.slice(0, 2).map((item) => (
+            <Slot key={item.id} item={item} active={active === item.id} onHome={handleHome} />
+          ))}
 
-        <button
-          type="button"
-          onClick={handleTopUp}
-          aria-label="Top up pulsa"
-          className="blue-grad -translate-y-8 grid h-14 w-14 shrink-0 place-items-center rounded-pill text-white ring-4 ring-white shadow-hover transition-transform active:scale-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
-        >
-          <BoltIcon />
-        </button>
+          <button
+            type="button"
+            onClick={handleTopUp}
+            aria-label="Top up pulsa"
+            className="blue-grad -translate-y-8 grid h-14 w-14 shrink-0 place-items-center rounded-pill text-white ring-4 ring-white shadow-hover transition-transform active:scale-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+          >
+            <BoltIcon />
+          </button>
 
-        {mobileNav.slice(2).map((item) => (
-          <Slot key={item.id} item={item} active={active === item.id} onHome={handleHome} />
-        ))}
+          {mobileNav.slice(2).map((item) => (
+            <Slot key={item.id} item={item} active={active === item.id} onHome={handleHome} />
+          ))}
+        </div>
       </div>
     </nav>
   );
