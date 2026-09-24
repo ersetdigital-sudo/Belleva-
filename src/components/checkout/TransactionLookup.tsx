@@ -253,12 +253,6 @@ export function TransactionLookup() {
         </button>
       </form>
 
-      <p className="mt-2.5 px-1 text-xs text-muted">
-        Nomor HP bisa ditulis <span className="font-semibold text-ink">0812…</span>,{" "}
-        <span className="font-semibold text-ink">812…</span>, atau{" "}
-        <span className="font-semibold text-ink">+62 812…</span> — semuanya terbaca sama.
-      </p>
-
       <div className="mt-8" aria-live="polite">
         {result === null ? (
           <div className="card p-8 text-center">
