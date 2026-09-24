@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 
 import { HelpIcon } from "@/components/icons";
@@ -31,11 +32,16 @@ export function MobileAppBar() {
   return (
     <div className="blue-grad relative pt-4 pb-9">
       <div className="relative z-10 flex items-center gap-2.5 px-4">
-        <span
-          className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-white text-lg leading-none font-extrabold text-brand"
-          aria-hidden="true"
-        >
-          B
+        {/* White tile so the brand-blue mark keeps its contrast on the blue bar. */}
+        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-white">
+          <Image
+            src="/images/logo-belleva-mark.png"
+            alt=""
+            width={26}
+            height={26}
+            priority
+            className="h-[26px] w-[26px] object-contain"
+          />
         </span>
 
         <span className="min-w-0">

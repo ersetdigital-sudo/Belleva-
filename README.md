@@ -90,6 +90,8 @@ Tiga hal di wireframe yang tidak bisa ditiru apa adanya karena asetnya belum ada
 2. **Bell notifikasi → tombol bantuan.** Belleva belum punya sistem notifikasi.
 3. **Ilustrasi promo & foto produk → gradient + ikon kategori.** Belum ada asetnya,
    dan bikin ilustrasi tiruan lebih buruk daripada tidak ada.
+4. **Rail kategori horizontal → grid 4×2.** Rail-nya memotong layanan terakhir di HP;
+   grid 4 kolom menampilkan kedelapan layanan utuh tanpa ada yang kepotong.
 
 ## Cara maintain
 
@@ -107,7 +109,7 @@ Lihat `src/lib/site.ts` → `externalLinks`. Semua nilai di sana masih `"#"` sep
 
 Selain itu:
 
-- `src/components/home/mobile/mobile-app-bar.tsx` — **monogram "B" di app bar masih placeholder.** `src/app/icon.png` itu mark biru dengan knockout transparan, jadi tidak terbaca di atas app bar biru. Ganti dengan mark putih begitu asetnya ada.
+- `public/images/logo-belleva-mark.png` — salinan mark dari `src/app/icon.png`, dipakai di app bar mobile. Mark-nya biru, jadi ditaruh di dalam tile putih biar tetap kontras di atas app bar biru. Kalau app icon-nya diganti, salin ulang file ini.
 - `src/data/products.ts` — **harga & nama paket data masih placeholder** (demo biar alurnya bisa dicoba). Cuma harga pulsa Telkomsel yang dari HTML asli. Daftar prefix operator juga perlu dicek lagi ke daftar resmi operator.
 - `src/data/payment-methods.ts` — **nomor rekening bank masih ngasal/demo** (atas nama "PT BELLEVA INDONESIA"), "Sisa saldo Rp 250.000" masih hardcode, dan **payload QRIS masih demo** (bukan QRIS asli dari payment gateway).
 - `src/data/testimonials.ts` — baru 1 testimoni (sesuai HTML asli).

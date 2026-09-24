@@ -10,25 +10,28 @@ import { CategoryIcon } from "@/components/icons";
 import { useProductTab } from "../product-tab-context";
 
 /**
- * Horizontal service rail. Same `categories` source as the desktop strip, so
- * tapping a tile opens the matching catalogue tab here too.
+ * Service grid. Same `categories` source as the desktop strip, so tapping a
+ * tile opens the matching catalogue tab here too.
+ *
+ * The wireframe asked for a horizontal rail, but that clipped the last
+ * services on a phone — 4 columns × 2 rows shows all eight with nothing cut.
  */
 export function MobileCategoryStrip() {
   const { activeGroup, setActiveGroup } = useProductTab();
 
   return (
     <nav aria-label="Layanan" className="mt-6">
-      <ul className="no-scrollbar flex gap-2.5 overflow-x-auto px-5 pb-1">
+      <ul className="grid grid-cols-4 gap-x-2 gap-y-3 px-5">
         {categories.map((category) => {
           const selected = category.productGroup === activeGroup;
           return (
-            <li key={category.id} className="shrink-0">
+            <li key={category.id}>
               <Link
                 href={category.href}
                 onClick={() => {
                   if (category.productGroup) setActiveGroup(category.productGroup);
                 }}
-                className="block w-[76px] text-center"
+                className="block text-center"
               >
                 <span
                   className={cn(
