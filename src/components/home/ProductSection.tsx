@@ -8,7 +8,7 @@ import { motion, useReducedMotion } from "motion/react";
 import { categoryGradient } from "@/data/categories";
 import { productGroups } from "@/data/products";
 import { inquireBill } from "@/lib/billing";
-import { findChoice, findProductGroup, findVendor } from "@/lib/catalog";
+import { findChoice, findVendor } from "@/lib/catalog";
 import { cn } from "@/lib/cn";
 import { digitsOnly, formatRupiah } from "@/lib/format";
 import { detectOperatorId, supportsAutoDetect } from "@/lib/operator";
@@ -17,6 +17,7 @@ import type { Bill, ProductItem } from "@/types";
 
 import { ArrowRightIcon, CategoryIcon, CheckIcon } from "@/components/icons";
 
+import { useCatalogue } from "./catalogue-context";
 import { ProductItemCard } from "./ProductItemCard";
 import { useProductTab } from "./product-tab-context";
 
@@ -83,6 +84,8 @@ function Step({
  */
 export function ProductSection() {
   const { activeGroup, setActiveGroup } = useProductTab();
+  /** The catalogue with the admin's prices applied, from the server page. */
+  const groups = useCatalogue(productGroups);
   const router = useRouter();
   const reduceMotion = useReducedMotion();
 
@@ -102,7 +105,7 @@ export function ProductSection() {
     [],
   );
 
-  const group = findProductGroup(activeGroup) ?? productGroups[0];
+  const group = groups.find((entry) => entry.id === activeGroup) ?? groups[0];
   const isPhone = supportsAutoDetect(group.id);
   // Cheap prefix lookup — no memo needed, and it keeps this a plain derivation.
   const detectedVendorId = isPhone ? detectOperatorId(customer) : null;
@@ -226,7 +229,7 @@ export function ProductSection() {
         aria-label="Pilih jenis produk"
         className="no-scrollbar mt-7 flex gap-2 overflow-x-auto pb-1 sm:flex-wrap sm:overflow-visible"
       >
-        {productGroups.map((entry) => (
+        {groups.map((entry) => (
           <button
             key={entry.id}
             type="button"

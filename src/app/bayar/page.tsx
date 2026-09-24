@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 
 import { PaymentFlow } from "@/components/checkout/PaymentFlow";
+import { getCatalogue } from "@/lib/products";
 import { getPaymentSettings, toPaymentMethods } from "@/lib/settings";
 
 /**
@@ -18,7 +19,10 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic";
 
 export default async function BayarPage() {
-  const methods = toPaymentMethods(await getPaymentSettings());
+  const [methods, groups] = await Promise.all([
+    getPaymentSettings().then(toPaymentMethods),
+    getCatalogue(),
+  ]);
 
   return (
     <Suspense
@@ -26,7 +30,7 @@ export default async function BayarPage() {
         <div className="mx-auto max-w-5xl px-5 py-20 text-sm text-muted">Memuat pembayaran…</div>
       }
     >
-      <PaymentFlow methods={methods} />
+      <PaymentFlow methods={methods} groups={groups} />
     </Suspense>
   );
 }

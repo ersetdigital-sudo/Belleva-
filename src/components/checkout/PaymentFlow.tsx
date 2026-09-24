@@ -13,7 +13,12 @@ import { cn } from "@/lib/cn";
 import { formatRupiah } from "@/lib/format";
 import { siteConfig } from "@/lib/site";
 import { saveTransaction } from "@/lib/transactions";
-import type { PaymentChannel, PaymentMethod, PaymentMethodId } from "@/types";
+import type {
+  PaymentChannel,
+  PaymentMethod,
+  PaymentMethodId,
+  ProductGroup,
+} from "@/types";
 
 import { CheckIcon, PaymentIcon } from "@/components/icons";
 
@@ -137,10 +142,17 @@ function CopyButton({ value, label = "Salin" }: { value: string; label?: string 
 }
 
 /**
- * Payment methods come from the caller rather than a static import: /bayar
- * reads them from the database (editable in /admin) and passes them down.
+ * Payment methods and the catalogue come from the caller rather than static
+ * imports: /bayar reads both from the database (editable in /admin) and passes
+ * them down, so the price shown and the price charged come from one source.
  */
-export function PaymentFlow({ methods }: { methods: PaymentMethod[] }) {
+export function PaymentFlow({
+  methods,
+  groups,
+}: {
+  methods: PaymentMethod[];
+  groups: ProductGroup[];
+}) {
   const params = useSearchParams();
   const reduceMotion = useReducedMotion();
 
@@ -149,13 +161,13 @@ export function PaymentFlow({ methods }: { methods: PaymentMethod[] }) {
   const customer = params.get("customer") ?? "";
 
   const prepaid = useMemo(
-    () => resolvePrepaid({ groupId, vendorId, itemId: params.get("item") }),
-    [groupId, vendorId, params],
+    () => resolvePrepaid({ groupId, vendorId, itemId: params.get("item") }, groups),
+    [groupId, vendorId, params, groups],
   );
   const postpaid = useMemo(
     () =>
-      resolvePostpaid({ groupId, vendorId, choiceId: params.get("choice"), customer }),
-    [groupId, vendorId, customer, params],
+      resolvePostpaid({ groupId, vendorId, choiceId: params.get("choice"), customer }, groups),
+    [groupId, vendorId, customer, params, groups],
   );
   const order = prepaid ?? postpaid;
 

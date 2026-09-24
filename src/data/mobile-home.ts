@@ -1,7 +1,6 @@
-import type { MobileNavItem, MobileProduct, MobilePromo } from "@/types";
+import type { MobileNavItem, MobileProduct, MobilePromo, ProductGroup } from "@/types";
 
 import { categoryGradient } from "./categories";
-import { productGroups } from "./products";
 
 /**
  * Promo slides for the mobile app home. Every claim is lifted from copy the
@@ -55,9 +54,7 @@ export const mobileNav: MobileNavItem[] = [
   { id: "transaksi", label: "Transaksi", href: "/cek-transaksi" },
 ];
 
-const prepaidGroups = productGroups.filter((group) => group.flow === "prepaid");
-
-function itemsOf(group: (typeof productGroups)[number]) {
+function itemsOf(group: ProductGroup) {
   return group.items ?? group.vendors?.[0]?.items ?? [];
 }
 
@@ -65,19 +62,28 @@ function itemsOf(group: (typeof productGroups)[number]) {
  * Every prepaid nominal, flattened and tagged with its group. The first vendor
  * of each group stands in for the group so the list stays readable — this is
  * what the mobile search filters.
+ *
+ * Takes the catalogue rather than importing it, so the prices the admin sets in
+ * /admin/produk are the ones the mobile home shows.
  */
-export const mobileCatalogue: MobileProduct[] = prepaidGroups.flatMap((group) =>
-  itemsOf(group).map((item) => ({
-    key: `${group.id}-${item.id}`,
-    groupId: group.id,
-    groupLabel: group.label,
-    icon: group.icon,
-    gradient: categoryGradient(group.icon),
-    item,
-  })),
-);
+export function buildMobileCatalogue(groups: ProductGroup[]): MobileProduct[] {
+  return groups
+    .filter((group) => group.flow === "prepaid")
+    .flatMap((group) =>
+      itemsOf(group).map((item) => ({
+        key: `${group.id}-${item.id}`,
+        groupId: group.id,
+        groupLabel: group.label,
+        icon: group.icon,
+        gradient: categoryGradient(group.icon),
+        item,
+      })),
+    );
+}
 
 /** Paket data tiles read best in the two-column grid: kuota, masa aktif, harga. */
-export const mobileRecommendations: MobileProduct[] = mobileCatalogue
-  .filter((entry) => entry.groupId === "data")
-  .slice(0, 4);
+export function buildMobileRecommendations(groups: ProductGroup[]): MobileProduct[] {
+  return buildMobileCatalogue(groups)
+    .filter((entry) => entry.groupId === "data")
+    .slice(0, 4);
+}

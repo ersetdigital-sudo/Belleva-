@@ -19,8 +19,11 @@ export interface ResolvedOrder {
   originalPrice?: number;
 }
 
-export function findProductGroup(id: string | null | undefined): ProductGroup | null {
-  return productGroups.find((group) => group.id === id) ?? null;
+export function findProductGroup(
+  id: string | null | undefined,
+  groups: ProductGroup[] = productGroups,
+): ProductGroup | null {
+  return groups.find((group) => group.id === id) ?? null;
 }
 
 export function findVendor(group: ProductGroup, id: string | null | undefined): Vendor | undefined {
@@ -37,13 +40,17 @@ export function findChoice(
 /**
  * Resolves a prepaid order from its ids. Only the catalogue id travels in the
  * URL, so the price always comes from the data layer rather than the client.
+ * `groups` carries the admin's prices; omitting it uses the shipped defaults.
  */
-export function resolvePrepaid(params: {
-  groupId: string | null;
-  vendorId: string | null;
-  itemId: string | null;
-}): ResolvedOrder | null {
-  const group = findProductGroup(params.groupId);
+export function resolvePrepaid(
+  params: {
+    groupId: string | null;
+    vendorId: string | null;
+    itemId: string | null;
+  },
+  groups: ProductGroup[] = productGroups,
+): ResolvedOrder | null {
+  const group = findProductGroup(params.groupId, groups);
   if (!group || group.flow !== "prepaid") return null;
 
   const vendor = findVendor(group, params.vendorId);
@@ -67,13 +74,16 @@ export function resolvePrepaid(params: {
 }
 
 /** Resolves a postpaid order (the bill itself is fetched via `inquireBill`). */
-export function resolvePostpaid(params: {
-  groupId: string | null;
-  vendorId: string | null;
-  choiceId: string | null;
-  customer: string;
-}): ResolvedOrder | null {
-  const group = findProductGroup(params.groupId);
+export function resolvePostpaid(
+  params: {
+    groupId: string | null;
+    vendorId: string | null;
+    choiceId: string | null;
+    customer: string;
+  },
+  groups: ProductGroup[] = productGroups,
+): ResolvedOrder | null {
+  const group = findProductGroup(params.groupId, groups);
   if (!group || group.flow !== "postpaid") return null;
 
   const vendor = findVendor(group, params.vendorId);

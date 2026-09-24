@@ -5,6 +5,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
 import { destroyImage, createUploadSignature } from "./cloudinary";
+import { defaultPrices, type PriceOverrides } from "@/lib/products";
 import {
   SESSION_COOKIE,
   createSessionToken,
@@ -126,6 +127,43 @@ export async function saveContactsAction(
 
     revalidatePath("/", "layout");
     return { ok: true };
+  } catch (error) {
+    return { ok: false, message: error instanceof Error ? error.message : "Gagal menyimpan." };
+  }
+}
+
+/**
+ * Saves product prices.
+ *
+ * Only the rows that differ from the shipped defaults are stored, so the record
+ * stays small and a price changed back in code still reaches the site. Prices
+ * are validated as positive integers — the checkout charges whatever lands here.
+ */
+export async function saveProductPricesAction(
+  prices: PriceOverrides,
+): Promise<{ ok: boolean; message?: string; changed?: number }> {
+  await requireAdmin();
+
+  try {
+    const supabase = createAdminClient();
+    const defaults = defaultPrices();
+    const changed: PriceOverrides = {};
+
+    for (const [key, value] of Object.entries(prices)) {
+      if (typeof value !== "number" || !Number.isFinite(value)) continue;
+      const price = Math.round(value);
+      if (price <= 0) return { ok: false, message: "Harga harus lebih dari 0." };
+      if (price !== defaults[key]) changed[key] = price;
+    }
+
+    const { error } = await supabase
+      .from("site_content")
+      .upsert({ key: "product_prices", data: { prices: changed } }, { onConflict: "key" });
+    if (error) return { ok: false, message: error.message };
+
+    revalidatePath("/", "layout");
+    revalidatePath("/admin/produk");
+    return { ok: true, changed: Object.keys(changed).length };
   } catch (error) {
     return { ok: false, message: error instanceof Error ? error.message : "Gagal menyimpan." };
   }

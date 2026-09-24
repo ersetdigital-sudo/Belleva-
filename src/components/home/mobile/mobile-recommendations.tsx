@@ -2,11 +2,13 @@
 
 import Link from "next/link";
 
-import { mobileCatalogue, mobileRecommendations } from "@/data/mobile-home";
+import { productGroups } from "@/data/products";
+import { buildMobileCatalogue, buildMobileRecommendations } from "@/data/mobile-home";
 import { formatRupiah } from "@/lib/format";
 
 import { CategoryIcon, PlusIcon } from "@/components/icons";
 
+import { useCatalogue } from "../catalogue-context";
 import { useProductTab } from "../product-tab-context";
 
 const MAX_RESULTS = 8;
@@ -23,6 +25,10 @@ interface MobileRecommendationsProps {
  */
 export function MobileRecommendations({ query }: MobileRecommendationsProps) {
   const { setActiveGroup } = useProductTab();
+  /** The catalogue with the admin's prices applied, from the server page. */
+  const catalogue = useCatalogue(productGroups);
+  const mobileCatalogue = buildMobileCatalogue(catalogue);
+  const mobileRecommendations = buildMobileRecommendations(catalogue);
   const term = query.trim().toLowerCase();
 
   const results = term
